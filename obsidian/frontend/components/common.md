@@ -102,8 +102,8 @@ async component must mirror its final layout with one of these
 | `<SkeletonVideo>` | `skeleton-video.tsx` | video placeholders |
 
 > [!note]
-> `components/ui/` (design-system primitives) does not exist yet — create it when
-> the first primitive is added. See [[folder-structure]].
+> `components/ui/` (design-system primitives) is catalogued separately in
+> [[components/ui]].
 
 ## Related
 

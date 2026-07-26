@@ -27,9 +27,29 @@ const publicSchema = z.object({
   NEXT_PUBLIC_SITE_URL: optionalUrl(),
 });
 
+/** Treat an empty env var as unset, for plain strings. */
+const optionalText = () =>
+  z.preprocess((v) => (v === "" ? undefined : v), z.string().optional());
+
 const serverSchema = z.object({
   /** Optional upstream the contact endpoint forwards leads to (CRM / webhook). */
   CONTACT_ENDPOINT: optionalUrl(),
+
+  /**
+   * Catalogue storage. Set both and the admin saves to Supabase; leave them
+   * unset and it saves to `.data/products.json` on the local disk.
+   * The service-role key bypasses row-level security — it must stay
+   * server-only, never `NEXT_PUBLIC_`.
+   */
+  SUPABASE_URL: optionalUrl(),
+  SUPABASE_SERVICE_ROLE_KEY: optionalText(),
+  SUPABASE_STORAGE_BUCKET: optionalText(),
+
+  /**
+   * Locks the admin area. While unset, `/admin` is open to anyone who knows
+   * the URL — fine before launch, not after.
+   */
+  ADMIN_PASSWORD: optionalText(),
 });
 
 /** Public env — safe to read anywhere (server or client). */
@@ -46,6 +66,10 @@ let cachedServerEnv: z.infer<typeof serverSchema> | undefined;
 export function getServerEnv() {
   cachedServerEnv ??= serverSchema.parse({
     CONTACT_ENDPOINT: process.env.CONTACT_ENDPOINT,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_STORAGE_BUCKET: process.env.SUPABASE_STORAGE_BUCKET,
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
   });
   return cachedServerEnv;
 }

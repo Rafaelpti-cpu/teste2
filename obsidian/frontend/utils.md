@@ -13,6 +13,12 @@ Pure helper functions in `src/utils/` (no side effects, unless noted).
 returns `true` for crawlers/audit tools. Used to skip heavy animation for bots.
 See [[seo-metadata]].
 
+## `format.ts`
+
+Locale-aware formatters for pt-BR — `formatPrice(179.9)` → `"R$ 179,90"`,
+`formatInstalments(179.9)` → `"3x de R$ 59,97"` (the shop's default plan). The
+`Intl.NumberFormat` instance is module-scope, so it is constructed once.
+
 ## `scroll-to.ts`
 
 `scrollTo(id?, immediate?)` — programmatic scroll to an element id (string) or a

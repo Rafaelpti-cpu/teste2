@@ -1,12 +1,170 @@
 ---
 tags: [meta, decision]
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # Decisions Log (ADRs)
 
 Architecture Decision Records. Each entry captures a choice, its context, and its
 consequences. Use [[templates/adr-note]] for new entries. Newest first.
+
+---
+
+## ADR-0023 — The admin ships unlocked, but lockable in one variable
+
+- **Status:** Accepted
+- **Date:** 2026-07-26
+
+**Context.** The shop asked for the admin without a login "for now" — the site
+is not published yet and a password is friction while the catalogue is being
+filled in. An open `/admin` with a delete button is also a live hazard the
+moment the site *is* published.
+
+**Decision.** Access control is written and wired, and **off while
+`ADMIN_PASSWORD` is unset**. Setting it locks pages (redirect) and endpoints
+(401) with no other change. While unlocked the admin shows a standing warning,
+`robots.ts` disallows `/admin`, and the layout sends `noindex, nofollow`.
+
+The session is an HMAC of a fixed subject keyed by the password, carried in an
+HttpOnly cookie — no session table, and rotating the password logs everyone out.
+
+**Consequences.** The shop gets the frictionless area it asked for, and securing
+it later is one environment variable rather than a project. The guard lives in
+the protected **views**, not in `app/admin/layout.tsx`, because that layout also
+wraps the login page and would redirect it to itself — a new admin page must
+call `requireAdmin()` explicitly, which is a real footgun and is documented in
+[[admin-area]].
+
+---
+
+## ADR-0022 — Two catalogue backings behind one interface
+
+- **Status:** Accepted
+- **Date:** 2026-07-26
+
+**Context.** The admin needs persistence, but the deploy target was undecided.
+The two honest options pull in opposite directions: a local file needs no setup
+and no account but requires a writable disk, while Supabase works on serverless
+hosts but cannot run until someone creates a project and pastes credentials.
+Picking either one alone would have blocked the shop — on setup, or on hosting.
+
+**Decision.** `CatalogStore` is an interface with two implementations. The file
+backing is the default and runs with zero configuration; Supabase takes over the
+moment `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` exist. `getCatalogBackend()`
+names the active one and the admin prints it on every page.
+
+Supabase is reached with plain `fetch` against PostgREST and Storage rather than
+`@supabase/supabase-js` — six calls, no dependency, no bundle cost.
+
+**Consequences.** The shop can fill the catalogue today and choose hosting later;
+moving is a matter of copying rows, since both backings store the same shape.
+The cost is a second implementation to keep in step — mitigated by the interface
+being six methods wide and by both parsing through the same zod schema.
+
+The file backing writes to `public/assets/produtos/` at runtime, which works in
+`next dev` and on a server with a real filesystem, and fails on Vercel. That is
+by design: it fails exactly where Supabase is the answer.
+
+---
+
+## ADR-0021 — WhatsApp is the conversion path, not a catalogue route
+
+- **Status:** Accepted
+- **Date:** 2026-07-25
+
+**Context.** Renova Closet is a physical shop in Santa Helena, PR. It has no
+checkout, no stock API, and no per-product page in this build — but it does have
+a phone number that is answered. Building `/product/[slug]` routes over a static
+data file would have produced pages that cannot transact and cannot be kept in
+sync with the shop floor.
+
+**Decision.** Every product and category card is an `<a>` to `wa.me` with the
+piece name pre-filled in the message (`whatsappProductHref` in `data/home.ts`).
+The header, hero, VIP band and footer all lead to the same place.
+
+**Consequences.** No dead routes and no stale stock. The trade-off is that the
+site is a storefront rather than a shop: adding real product pages later means
+adding a data source first, and the JSON-LD grows a `Product` graph at that
+point. Category cards all land in the same inbox, distinguished only by the
+pre-filled text.
+
+---
+
+## ADR-0020 — The hero 3D scene is stripped for bots, at the cost of static rendering
+
+- **Status:** Accepted
+- **Date:** 2026-07-25
+
+**Context.** The hero carries a WebGL swing tag ([[hero-scene]]). Per
+[[optimize-3d-scene]] §1, a crawler or Lighthouse run must never fetch, parse or
+evaluate the three.js bundle — script evaluation time is what the audit measures.
+
+**Decision.** `views/home/index.tsx` calls `isBot()` and renders the flat
+`<TagCard>` instead of `<LazyHangTag>`. The scene itself is a
+`dynamic(… { ssr: false })` client leaf, so `three` lands in its own chunk that
+the bot branch never requests.
+
+**Consequences.** `isBot()` reads `headers()`, which opts route `/` **out of
+static prerendering** — it renders per request (`ƒ`, not `○` in the build
+output). That is a real cost, accepted here because the page is a single
+marketing route with no expensive data fetching. If the route must go static
+later, move the branch into middleware (rewrite bots to a poster route) rather
+than dropping the check. The same `<TagCard>` doubles as the no-WebGL fallback
+and the placeholder the canvas cross-fades over, so the markup earns its keep
+three times.
+
+---
+
+## ADR-0019 — Site content lives in `src/data/home.ts`, not `data/mocks/`
+
+- **Status:** Accepted
+- **Date:** 2026-07-25
+
+**Context.** [[component-conventions]] routes placeholder data to
+`src/data/mocks/<page>.ts`. The Renova content — prices, address, opening hours,
+WhatsApp links — is not placeholder: it is the live shop's real data, and it is
+what a CMS would eventually serve.
+
+**Decision.** Real site content lives in `src/data/<page>.ts` with typed
+interfaces. `data/mocks/` stays reserved for genuine placeholders. The rule that
+components never import the data directly is unchanged — the view reads it and
+passes it down as props.
+
+**Consequences.** One honest name for two different things. When a CMS arrives it
+replaces `data/home.ts` behind the same interfaces, and no component changes.
+
+---
+
+## ADR-0018 — The Renova brand palette is a Tier-1/Tier-2 token set, sampled from the logo
+
+- **Status:** Accepted
+- **Date:** 2026-07-25
+
+**Context.** The starter ships deliberately without a palette ([[design-system]]).
+This project needed one, and the only fixed input was the logo — a coral hanger
+over a black wordmark.
+
+**Decision.** The hanger colour was sampled from
+`public/assets/brand/renova-logo.png` (the dominant fully-opaque pixel,
+`rgb(240, 140, 152)`) and became `--raw-color-rose-500`; the rest of the rose
+ramp and a warm cream/ink neutral ramp are derived from it. Semantic Tier-2
+roles (`--surface-*`, `--foreground-*`, `--action-*`, `--border-*`, `--decor-*`)
+name the purposes, and dark mode overrides **only** Tier 2. Typography pairs
+**Jost** (display — the closest Google Fonts match to the logo's wide geometric
+lettering) with the starter's **Onest** for body copy.
+
+One set of Tier-2 roles is deliberately **not** themed: `--tag-paper`,
+`--tag-ink`, `--tag-ink-muted`, `--tag-accent`. They describe a printed swing
+tag, which looks the same under any light, and they are what both the WebGL
+scene and its DOM fallback read — see [[hero-scene]].
+
+**Consequences.** A rebrand is a Tier-1 edit. Nothing in markup references a
+colour by appearance, so the dark theme was a block of Tier-2 overrides rather
+than a sweep through components. The cream ground (`--raw-color-cream-50`) is a
+deliberate departure from pure white: the rose reads clinical against `#fff`.
+The unthemed `--tag-*` roles are the one documented exception to "Tier 2 is the
+themeable layer" — the scene samples them once at construction, so a live OS
+theme switch cannot leave the tag mismatched.
 
 ---
 

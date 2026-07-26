@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   images: {
     // Modern formats — smaller than JPEG/PNG; the browser picks what it supports.
     formats: ["image/avif", "image/webp"],
+    // Product photos live in Supabase Storage when that backing is configured;
+    // `next/image` refuses remote hosts that are not listed here.
+    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }],
     // Breakpoints `next/image` uses to build `srcset`. `deviceSizes` covers
     // full-width images (aligned with the adaptive-grid breakpoints + retina);
     // `imageSizes` covers smaller, fixed-width images and icons.

@@ -85,6 +85,14 @@ import { useRouter } from 'next/navigation';
 
 Each route exports `metadata` via the shared generator — see [[seo-metadata]].
 
+## Current routes
+
+| Route | Renders | Notes |
+|-------|---------|-------|
+| `/` | `views/home` | Dynamic (`isBot()`) — ADR-0020 |
+| `/produto/[slug]` | `views/produto` | Per-product page; `og:image` is the cover photo — ADR-0024 |
+| `/admin`, `/admin/produtos/*`, `/admin/entrar` | `views/admin` | `noindex`, `force-dynamic` — [[admin-area]] |
+
 ## Related
 
 [[system-overview]] · [[component-conventions]] · [[new-page]]

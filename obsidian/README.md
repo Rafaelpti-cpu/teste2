@@ -38,16 +38,22 @@ humans and AI agents (Claude Code, Cursor).
 - [[component-conventions]] — how to write & place components
 - [[html-semantics]] — semantic, accessible, SEO-correct markup rules
 - [[seo-metadata]] — metadata generation & bot detection
+- [[hero-scene]] — the hero's WebGL swing tag: files, budgets, deviations
 - [[components/animation-springs|Spring components catalog]]
 - [[components/common|Common components catalog]]
+- [[components/ui|UI primitives catalog]]
 - [[hooks]] — custom hooks catalog
 - [[utils]] — utility functions catalog
 
 ### 03 — Backend
-- [[backend/README|Backend overview]] — API layer; no DB/auth yet
+- [[backend/README|Backend overview]] — API layer, catalogue store, admin access
 - [[api-architecture]] — `app/api` route-handler convention & secret handling
+- [[catalog-store]] — where products live: one interface, two backings
+- [[admin-area]] — `/admin`: product CRUD, sizes, colours, photos, access
+- [[site-content]] — the site's copy, edited from `/admin/textos`
 
 ### 04 — Workflows
+- [[deploy]] — colocar o site no ar: Vercel + Supabase, passo a passo
 - [[new-page]] — playbook for implementing a new page/section
 - [[generic-layout-prompt]] — fill-in prompt template for a new page/section
 - [[optimize-3d-scene]] — the `optimize-3d-scene` skill: performance work on a three.js/WebGL scene

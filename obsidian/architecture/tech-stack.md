@@ -41,6 +41,19 @@ See [[design-system]].
 No `framer-motion`, no CSS transitions/keyframes. See [[animation-system]] and
 [[text-engine]]. ADR: [[decisions-log]] ADR-0002.
 
+## 3D
+
+| Package | Version | Role |
+|---------|---------|------|
+| `three` | `^0.185.1` | WebGL renderer for the hero swing tag |
+| `@types/three` | `^0.185.1` | Types (dev dependency) |
+
+One scene only — [[hero-scene]] — reached through a `dynamic({ ssr: false })`
+leaf so `three` stays in its own chunk and never reaches a crawler
+(ADR-0020). Budgets come from `src/lib/scene/device.ts`; the render loop rides
+the shared ticker rather than starting a second rAF. Performance work on it goes
+through the [[optimize-3d-scene]] skill (AGENTS.md hard rule #11).
+
 ## Scroll & state
 
 | Package | Version | Role |

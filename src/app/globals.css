@@ -13,8 +13,33 @@
   --raw-color-neutral-900: #171717;
   --raw-color-neutral-950: #0a0a0a;
 
+  /* Brand — sampled from the Renova Closet logo
+     (public/assets/brand/renova-logo.png). `rose-500` is the exact hanger
+     colour, rgb(240, 140, 152); the rest of the ramp is derived from it. */
+  --raw-color-rose-50: #fdf3f4;
+  --raw-color-rose-100: #fae6e8;
+  --raw-color-rose-200: #f6cdd2;
+  --raw-color-rose-400: #f4a5ae;
+  --raw-color-rose-500: #f08c98;
+  --raw-color-rose-600: #d9727f;
+  --raw-color-rose-700: #b2545f;
+
+  /* Warm neutrals — a paper-cream ground that keeps the rose from going
+     clinical against pure white. */
+  --raw-color-cream-50: #fbf8f6;
+  --raw-color-cream-100: #f4eeea;
+  --raw-color-cream-200: #e7ded8;
+  --raw-color-ink-500: #6f6763;
+  --raw-color-ink-800: #2a2422;
+  --raw-color-ink-900: #181413;
+
   --raw-duration-fast: 150ms;
   --raw-duration-normal: 250ms;
+
+  --raw-radius-small: 0.5rem;
+  --raw-radius-medium: 1rem;
+  --raw-radius-large: 1.75rem;
+  --raw-radius-full: 9999px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -25,17 +50,70 @@
    Grammar: --<role>[-<variant>][-<state>]
    --------------------------------------------------------------------------- */
 :root {
-  --background: var(--raw-color-white);
-  --foreground: var(--raw-color-neutral-900);
+  --background: var(--raw-color-cream-50);
+  --foreground: var(--raw-color-ink-900);
+
+  /* Surfaces — the ground the page is built on. */
+  --surface-raised: var(--raw-color-white);
+  --surface-muted: var(--raw-color-cream-100);
+  --surface-inverse: var(--raw-color-ink-900);
+  --surface-accent: var(--raw-color-rose-50);
+
+  /* Text roles. */
+  --foreground-muted: var(--raw-color-ink-500);
+  --foreground-inverse: var(--raw-color-cream-50);
+  --foreground-accent: var(--raw-color-rose-700);
+
+  /* Actions. */
+  --action-primary: var(--raw-color-rose-500);
+  --action-primary-hover: var(--raw-color-rose-600);
+  --action-primary-foreground: var(--raw-color-ink-900);
+
+  /* Lines & decoration. */
+  --border-subtle: var(--raw-color-cream-200);
+  --border-strong: var(--raw-color-ink-800);
+  --decor-accent: var(--raw-color-rose-500);
+  --decor-accent-soft: var(--raw-color-rose-200);
+
+  /* The hero swing tag is a physical object — printed card, the same cream in
+     any light. These roles deliberately have no dark-mode override; see
+     obsidian/frontend/hero-scene.md. */
+  --tag-paper: var(--raw-color-cream-100);
+  --tag-ink: var(--raw-color-ink-900);
+  --tag-ink-muted: var(--raw-color-ink-800);
+  --tag-accent: var(--raw-color-rose-600);
 
   --duration-fast: var(--raw-duration-fast);
   --duration-normal: var(--raw-duration-normal);
+
+  --radius-card: var(--raw-radius-medium);
+  --radius-panel: var(--raw-radius-large);
+  --radius-pill: var(--raw-radius-full);
+  --radius-control: var(--raw-radius-small);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: var(--raw-color-neutral-950);
-    --foreground: var(--raw-color-neutral-100);
+    --background: var(--raw-color-ink-900);
+    --foreground: var(--raw-color-cream-50);
+
+    --surface-raised: var(--raw-color-ink-800);
+    --surface-muted: var(--raw-color-ink-800);
+    --surface-inverse: var(--raw-color-cream-50);
+    --surface-accent: var(--raw-color-ink-800);
+
+    --foreground-muted: var(--raw-color-cream-200);
+    --foreground-inverse: var(--raw-color-ink-900);
+    --foreground-accent: var(--raw-color-rose-400);
+
+    --action-primary: var(--raw-color-rose-500);
+    --action-primary-hover: var(--raw-color-rose-400);
+    --action-primary-foreground: var(--raw-color-ink-900);
+
+    --border-subtle: var(--raw-color-ink-500);
+    --border-strong: var(--raw-color-cream-200);
+    --decor-accent: var(--raw-color-rose-500);
+    --decor-accent-soft: var(--raw-color-rose-700);
   }
 }
 
@@ -55,7 +133,32 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-inverse: var(--foreground-inverse);
+  --color-foreground-accent: var(--foreground-accent);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-accent: var(--surface-accent);
+  --color-action-primary: var(--action-primary);
+  --color-action-primary-hover: var(--action-primary-hover);
+  --color-action-primary-foreground: var(--action-primary-foreground);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-decor-accent: var(--decor-accent);
+  --color-decor-accent-soft: var(--decor-accent-soft);
+  --color-tag-paper: var(--tag-paper);
+  --color-tag-ink: var(--tag-ink);
+  --color-tag-ink-muted: var(--tag-ink-muted);
+  --color-tag-accent: var(--tag-accent);
+
+  --radius-card: var(--radius-card);
+  --radius-panel: var(--radius-panel);
+  --radius-pill: var(--radius-pill);
+  --radius-control: var(--radius-control);
+
   --font-sans: var(--font-onest);
+  --font-display: var(--font-jost);
 
   /* Leading floor for clipped TextEngine reveals — see
      obsidian/frontend/text-engine.md → "Alignment & line-height". */
@@ -67,12 +170,15 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
+}
+
+/* The page gutter — a pure-utility combo repeated by every section, with no
+   markup of its own, which is exactly what `@utility` is for (ADR-0012). */
+@utility container-page {
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
 }
 
 @layer base {
@@ -111,7 +217,29 @@ body {
   }
 }
 
+@layer base {
+  ::selection {
+    background: var(--decor-accent-soft);
+    color: var(--foreground);
+  }
+
+  /* The whole site is keyboard-navigable; the ring uses the brand accent so it
+     stays visible on both the cream and the ink surfaces. */
+  :focus-visible {
+    outline: 2px solid var(--action-primary);
+    outline-offset: 3px;
+  }
+}
+
 @layer utilities {
+  /* Horizontal rails (marquee, product rail) scroll without a visible bar. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {

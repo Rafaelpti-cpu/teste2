@@ -1,0 +1,115 @@
+"use client";
+
+import Image from "next/image";
+
+import { Hover } from "@/components/animation/springs/hover";
+import { Inview } from "@/components/animation/springs/in-view";
+import { coverImage, hoverImage, type Product } from "@/types/catalog";
+import { formatInstalments, formatPrice } from "@/utils/format";
+
+export interface ProductCardProps {
+  product: Product;
+  /** Opens the detail dialog. */
+  onOpen: (product: Product) => void;
+  /** Position in the grid — drives the reveal stagger within each row. */
+  index: number;
+}
+
+export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
+  const cover = coverImage(product);
+  const second = hoverImage(product);
+
+  return (
+    <Inview
+      tag="li"
+      mode="once"
+      from={{ opacity: 0, y: 48 }}
+      to={{ opacity: 1, y: 0 }}
+      config={{ tension: 130, friction: 27 }}
+      delayIn={(index % 4) * 80}
+    >
+      <article className="flex h-full flex-col">
+        {/*
+          A button, not a link: it opens the piece on this page. Tapping goes
+          straight to the photos and the details — most customers are on a
+          phone, where the hover swap below never happens.
+        */}
+        <button
+          type="button"
+          onClick={() => onOpen(product)}
+          className="group flex h-full w-full flex-col gap-4 text-left"
+          aria-label={`Ver ${product.name}`}
+        >
+          <Hover
+            tag="div"
+            from={{ scale: 1 }}
+            to={{ scale: 1.05 }}
+            config={{ tension: 170, friction: 24 }}
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-card bg-surface-muted"
+          >
+            <Image
+              src={cover}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 18rem"
+              className="object-cover"
+            />
+            {/* The shop's own alternate angle. A cross-fade is opacity only,
+                which is the one case CSS owns (ADR-0014) — no spring needed. */}
+            {second && (
+              <Image
+                src={second}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 50vw, 18rem"
+                className="object-cover opacity-0 transition-opacity duration-[var(--duration-normal)] ease-entrance group-hover:opacity-100"
+              />
+            )}
+            {product.images.length > 1 && (
+              <span className="absolute right-2 bottom-2 rounded-pill bg-background/85 px-2 py-0.5 text-[0.625rem] text-foreground-muted backdrop-blur-sm">
+                {product.images.length} fotos
+              </span>
+            )}
+          </Hover>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-xs tracking-[0.18em] text-foreground-muted uppercase">
+              {product.category}
+            </span>
+            <h3 className="text-base text-foreground">{product.name}</h3>
+            <p className="font-display text-lg text-foreground">
+              {formatPrice(product.price)}
+              <span className="ml-2 text-xs font-normal text-foreground-muted">
+                ou {formatInstalments(product.price)}
+              </span>
+            </p>
+
+            {product.sizes.length > 0 && (
+              <p className="text-xs text-foreground-muted">
+                Tam. {product.sizes.join(" · ")}
+              </p>
+            )}
+
+            {product.colors.length > 0 && (
+              <ul
+                className="mt-1 flex items-center gap-1.5"
+                aria-label="Cores disponíveis"
+              >
+                {product.colors.map((color) => (
+                  <li
+                    key={`${color.name}-${color.hex}`}
+                    title={color.name}
+                    style={{ backgroundColor: color.hex }}
+                    className="size-3 rounded-pill border border-border-subtle"
+                  >
+                    <span className="sr-only">{color.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </button>
+      </article>
+    </Inview>
+  );
+};

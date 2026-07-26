@@ -22,19 +22,19 @@ interface Category {
 const CATEGORIES: Category[] = [
   {
     key: "necessary",
-    title: "Strictly necessary",
-    body: "Required for the site to work — sign-in, security, page navigation. These can't be turned off.",
+    title: "Estritamente necessários",
+    body: "Fazem o site funcionar e guardam a sua escolha sobre cookies. Não podem ser desligados.",
     required: true,
   },
   {
     key: "analytics",
-    title: "Analytics",
-    body: "Anonymised usage stats so we know which pages help and which fall flat. No personal profile is built.",
+    title: "Análise de uso",
+    body: "Números anônimos de acesso, para sabermos quais peças e páginas as pessoas procuram. Nenhum perfil pessoal é criado.",
   },
   {
     key: "marketing",
     title: "Marketing",
-    body: "Lets us measure ad performance and re-show content you didn't get to finish reading. Opt out anytime.",
+    body: "Permitem medir os anúncios da loja e mostrar novidades para quem já visitou o site. Você pode recusar quando quiser.",
   },
 ];
 
@@ -116,12 +116,12 @@ export const CookiePreferencesModal = () => {
         >
           <header className="flex items-start justify-between gap-3">
             <h2 id={TITLE_ID} className="text-xl font-medium leading-tight">
-              Cookie preferences
+              Preferências de cookies
             </h2>
             <button
               type="button"
               onClick={closeModal}
-              aria-label="Close cookie preferences"
+              aria-label="Fechar preferências de cookies"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/10 text-foreground hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -144,7 +144,7 @@ export const CookiePreferencesModal = () => {
               rel="noopener noreferrer"
               className="text-foreground underline underline-offset-2"
             >
-              privacy policy
+              política de privacidade
             </Link>
             .
           </p>
@@ -187,13 +187,13 @@ export const CookiePreferencesModal = () => {
 
           <footer className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <CookieButton variant="secondary" onClick={rejectAll}>
-              Reject all
+              Recusar tudo
             </CookieButton>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
               <CookieButton variant="secondary" onClick={handleSave}>
-                Save preferences
+                Salvar preferências
               </CookieButton>
-              <CookieButton onClick={acceptAll}>Accept all</CookieButton>
+              <CookieButton onClick={acceptAll}>Aceitar tudo</CookieButton>
             </div>
           </footer>
         </animated.div>

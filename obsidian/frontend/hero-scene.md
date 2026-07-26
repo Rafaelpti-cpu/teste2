@@ -1,0 +1,90 @@
+---
+tags: [frontend, 3d, stable]
+updated: 2026-07-25
+---
+
+# Hero Scene — the swing tag
+
+The hero carries the project's only WebGL scene: a paper swing tag (a clothing
+hang tag) on a cord, printed with the Renova mark, swinging as a damped pendulum
+and turning slowly on its own axis. On desktop the pointer nudges it.
+
+It exists because the brand *is* a hanger and a tag — the 3D object is the
+product's own packaging, not decoration bolted onto a hero.
+
+## Files
+
+| File | Role |
+|------|------|
+| `src/lib/scene/device.ts` | Device tier + every budget derived from it |
+| `src/lib/three/tag-face.ts` | Draws the printed face onto a 2D canvas (pure) |
+| `src/lib/three/hang-tag-scene.ts` | The scene class — build, prewarm, loop, dispose |
+| `src/views/home/sections/hang-tag.tsx` | Client leaf: DOM, observers, cross-fade |
+| `src/views/home/sections/lazy-hang-tag.tsx` | `dynamic({ ssr: false })` wrapper |
+| `src/views/home/sections/tag-card.tsx` | The same tag as flat DOM |
+
+## How it is built to [[optimize-3d-scene]]
+
+Built to the skill from the start rather than optimised afterwards. Mapping each
+section to what the code actually does:
+
+| § | Rule | Here |
+|---|------|------|
+| 1 | No scene for robots | `isBot()` in the view renders `<TagCard>`; the `three` chunk is never requested (ADR-0020) |
+| 2 | Tier once, at construction | `getSceneBudget()` — read in the constructor, never re-read |
+| 3 | Prewarm everything | `prewarm()` compiles programs and renders a frame before the cross-fade; the face texture and the logo mark are built in the async `create()` factory, after `document.fonts.ready` |
+| 4 | Render only when visible | `IntersectionObserver` (`rootMargin: 20%`) + `document.hidden`, both feeding `syncLoop()` |
+| 4 | One shared rAF | `subscribeToTicker` — no second loop |
+| 5 | Frame budget per tier | 30 fps mobile / 45 tablet / uncapped desktop |
+| 6 | Clamp pixel ratio | 1.0 / 1.25 / 1.5 — clamped to 1.0 (not below) on mobile because the printed text has hard edges |
+| 7 | Cut fill | 4 meshes, no post-processing, no shadow maps, `antialias: false` on mobile, `stencil: false` |
+| 8 | As few lights as the look survives | One `DirectionalLight` + a PMREM'd `RoomEnvironment`; `AmbientLight` for lift. No light is added or removed at runtime |
+| 9 | No per-frame allocation | The loop mutates three rotations and calls `render()`; no `Vector3`/`Matrix4` is constructed in it |
+| 11 | No cursor on touch | `budget.pointer` is `false` below desktop — the listener is never attached |
+| 13 | iOS details | No `resize` listener on touch (`ResizeObserver` only on the pointer tier); `dt` clamped to 50 ms; wrapper promoted with `transform-gpu backface-hidden will-change-transform` |
+| 13 | Dispose | Every geometry, material, texture and listener is tracked and released in `dispose()` |
+
+**Deliberate deviation:** `alpha: true`. §7 prefers an opaque canvas, but the tag
+floats over the page's cream background — an opaque canvas would need the page
+colour baked in and would break in dark mode.
+
+## Two things that are easy to break
+
+**The frustum is framed around the *swung* tag, not the resting one.** The
+pendulum's arc is wider than the card, so the camera distance (8.4), the pivot
+height and `MAX_SWING` (0.2 rad) are a set — change one and the far bottom
+corner clips against the canvas edge. The loop also hard-stops the angle at
+`MAX_SWING` and bounces it back, so no pointer flick can push it out of frame.
+
+**The lighting is deliberately under 1.0 total** (key 1.15 + ambient 0.35 +
+environment 0.4). Cream paper under a strong key clips to pure white and takes
+the small printed lines with it — the tag renders as a blank card. If the tag
+ever looks washed out, that is the first thing to check, not the texture.
+
+## The tag has its own colours
+
+The scene reads `--tag-paper` / `--tag-ink` / `--tag-ink-muted` / `--tag-accent`,
+**not** the page's surface and foreground roles. Those four are the only Tier-2
+tokens with no dark-mode override, on purpose: a swing tag is a printed object
+and looks the same under any light.
+
+Two things fall out of that. The scene never has to react to a theme change
+after construction (it samples the tokens once, in the React leaf, and builds
+the texture from them). And `<TagCard>` — which uses the same roles — matches
+the canvas exactly, so the cross-fade between them is invisible.
+
+**Reduced motion / energy saver:** `sceneShouldFreeze()` settles the pendulum,
+draws one resting frame and never subscribes to the ticker. WebGL keeps the last
+frame on the canvas, so a frozen scene costs nothing.
+
+## Not yet measured
+
+The §14 before/after numbers do not exist for this scene: it is new (no
+"before"), and the budgets were taken from the skill's guidance rather than from
+a profile of this project on a real phone. Before shipping, run the §0 harness
+against a production build and confirm `renderer.info.programs.length` is stable
+after the cross-fade.
+
+## Related
+
+[[optimize-3d-scene]] · [[animation-system]] · [[design-system]] · [[components/ui]]

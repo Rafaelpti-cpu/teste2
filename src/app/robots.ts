@@ -11,6 +11,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      // The admin has nothing for a crawler and should never appear in
+      // results. The area also sends `noindex` itself — see app/admin/layout.tsx.
+      disallow: ["/admin", "/api/"],
     },
     sitemap: `${siteConfig.url}/sitemap.xml`,
     host: siteConfig.url,

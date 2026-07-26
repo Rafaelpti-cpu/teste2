@@ -129,8 +129,21 @@ every case (motion is spring-based, so there are no keyframes to co-locate).
 
 ## Current theme state
 
-The starter ships a **minimal** theme on purpose — the convention is the
-deliverable, not a palette. It defines:
+> [!info] This project has a brand palette
+> The Renova Closet theme (ADR-0018) adds a `--raw-color-rose-*` ramp sampled
+> from the logo (`rose-500` = `rgb(240,140,152)`, the hanger colour), a warm
+> `cream`/`ink` neutral ramp, and the Tier-2 roles `--surface-raised/muted/
+> inverse/accent`, `--foreground-muted/inverse/accent`, `--action-primary[-hover]
+> [-foreground]`, `--border-subtle/strong` and `--decor-accent[-soft]`, plus
+> `--radius-card/panel/pill/control`. Dark mode overrides **only** Tier 2 —
+> except `--tag-paper/-ink/-ink-muted/-accent`, which describe a printed object
+> and are the one documented unthemed set ([[hero-scene]], ADR-0018).
+> There is one `@utility` — `container-page`, the page gutter (a pure-utility
+> combo with no markup, the ADR-0012 case for `@utility`).
+> Type pairs **Jost** (`--font-display`) with **Onest** (`--font-sans`).
+
+The starter itself ships a **minimal** theme on purpose — the convention is the
+deliverable, not a palette. Out of the box it defines:
 
 - **Tier 1:** a small neutral ramp (`--raw-color-white`, `--raw-color-neutral-100/900/950`)
   and two durations (`--raw-duration-fast/normal`).
@@ -180,8 +193,16 @@ If you are reaching past this list, you want `<Hover>` — see
 
 ## Typography
 
-Font: **Onest** (`next/font/google`), bound to `--font-onest` → `--font-sans`.
-Loaded in `src/app/layout.tsx` and exposed on `<body>` as `--font-onest`.
+Two faces, both `next/font/google`, both loaded in `src/app/layout.tsx` and
+exposed as CSS variables on `<body>`:
+
+| Face | Variable | Binding | Used for |
+|------|----------|---------|----------|
+| **Onest** | `--font-onest` | `--font-sans` | body copy, UI (the `<body>` default) |
+| **Jost** | `--font-jost` | `--font-display` | headings, the wordmark, tracked labels (`font-display`) |
+
+Jost is the closest Google Fonts match to the geometric, wide-tracked lettering
+of the Renova Closet logo — ADR-0018.
 
 ## Styling rules
 

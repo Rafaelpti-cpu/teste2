@@ -16,6 +16,8 @@ next16-claude-starter/
 ├── public/                  ← static assets (see "public/" section below)
 ├── obsidian/                ← this Obsidian vault — ALL project documentation
 ├── .claude/settings.json    ← Claude Code hooks — automate the vault workflow
+├── supabase/schema.sql      ← catalogue table, for the Supabase backing
+├── .data/                   ← products written by the admin (gitignored)
 ├── app config files         ← next.config.ts, tsconfig, eslint, postcss
 ├── README.md                ← project README → points into the vault
 ├── AGENTS.md                ← agent guide — breaking-change warning, hard rules, vault pointer
@@ -46,14 +48,21 @@ src/
 │   ├── globals.css         # Tailwind v4 config + design tokens
 │   └── favicon.ico
 │
+├── data/                   # Static site content (stands in for a CMS) — ADR-0019
+│   ├── home.ts             # Copy, links, hours — everything except products
+│   └── catalog-seed.ts     # The catalogue the store opens with, written once
+│
 ├── views/                  # Page-level components — one per route
-│   └── home.tsx            # HomeView (Server Component, empty — start here)
+│   ├── home/               # HomeView (Server Component)
+│   │   ├── index.tsx       #   assembles the sections, passes content down as props
+│   │   └── sections/       #   feature components — with the feature, not in components/
+│   └── admin/              # Admin views — product list, form, login
 │
 ├── layouts/                # Reusable layout wrappers
 │   └── scroll-layout.tsx   # Lenis smooth-scroll wrapper
 │
 ├── components/
-│   ├── ui/                 # Design-system primitives (Button, Input…) — empty, add as needed
+│   ├── ui/                 # Design-system primitives — see [[components/ui]]
 │   ├── common/             # Shared infrastructure (Cookie, grid, ReducedMotion, Skeletons)
 │   └── animation/springs/  # ⚠️ Animation engine — #do-not-modify
 │
@@ -66,15 +75,20 @@ src/
 │   ├── animation/ticker.ts # Shared app-wide requestAnimationFrame loop
 │   ├── api/                # API route-handler helpers (handle, ApiError)
 │   ├── api-client.ts       # Typed same-origin /api fetch wrapper (client)
+│   ├── admin/             # Admin access control + browser client — see [[admin-area]]
+│   ├── catalog/           # Product store: interface, file + Supabase backings
+│   ├── scene/device.ts     # WebGL device tiering + budgets — see [[hero-scene]]
 │   ├── site.ts             # Site-wide SEO config (single source of truth)
-│   └── springs/config.ts   # Global animation config
+│   ├── springs/config.ts   # Global animation config
+│   └── three/              # The hero swing-tag scene + its canvas texture
 │
 ├── utils/                  # Pure utility functions (no side effects)
 │   ├── animation/coords.ts
 │   ├── seo/generate-page-metadata.ts · seo/structured-data.ts
-│   ├── is-bot.ts · lvh.ts · math.ts · scroll-to.ts
+│   ├── format.ts · is-bot.ts · lvh.ts · math.ts · scroll-to.ts
 │
 ├── types/                  # Shared TypeScript types
+│   ├── catalog.ts          # Product, ProductColor, categories, size presets
 │   └── springs.ts
 │
 └── style/                  # Extra CSS layers imported into globals.css
@@ -111,6 +125,7 @@ public/
 | A custom hook | `hooks/<domain>/` |
 | A pure helper | `utils/<domain>/` |
 | A shared type | `types/` |
+| Real site content (copy, prices, links) | `src/data/<page-name>.ts` — ADR-0019 |
 | Mock/placeholder data | `src/data/mocks/<page-name>.ts` (create folder as needed) |
 | A third-party client init | `lib/` |
 | A site content asset (image, video) | `public/assets/<section>/` — one folder per section |

@@ -8,8 +8,56 @@ updated: 2026-07-25
 Chronological log of notable changes to the project. Newest first.
 This is a human-curated log — not a mirror of `git log`.
 
+## 2026-07-26
+
+- **Admin area for the catalogue** — `/admin` adds, edits, hides and deletes
+  products, each with description, price, category, photo, **available sizes**
+  and **available colours**. See [[admin-area]]. Products moved out of
+  `src/data/home.ts` into a store ([[catalog-store]]) with two backings — a
+  local JSON file by default, Supabase when its env vars are set (ADR-0022) —
+  and the home view now lists the store and filters to `active`, so hiding a
+  piece removes it from the site. Access control ships **unlocked** at the
+  shop's request and locks on `ADMIN_PASSWORD` (ADR-0023); `/admin` is
+  `noindex` and disallowed in `robots.ts` either way. New: `types/catalog.ts`,
+  `lib/catalog/*`, `lib/admin/*`, `app/api/admin/*`, `views/admin/*`,
+  `supabase/schema.sql`.
+- **Fixed a data-loss bug before it shipped** — `productPatchSchema` was
+  `productInputSchema.partial()`, and `.partial()` does **not** strip zod
+  defaults. A `PATCH` carrying only `{ active: false }` parsed into
+  `{ active: false, sizes: [], colors: [], description: "" }` and the store
+  spread that over the record, wiping the size grade. Found by testing the
+  "No site / Oculta" toggle, which sends exactly that body. The patch schema is
+  now built from a defaults-free base; defaults belong to creation only.
+  Verified: a `{ active: false }` patch leaves sizes and colours intact.
+
 ## 2026-07-25
 
+- **Renova Closet site built on route `/`** — the starter's empty home view is now
+  a full single-page storefront for a clothing shop in Santa Helena, PR:
+  sticky header, hero with a WebGL swing tag, scroll-driven marquee, four
+  category cards, a twelve-piece grid, VIP WhatsApp band, reviews, store details
+  and footer. New: a brand token set sampled from the logo (ADR-0018), content in
+  `src/data/home.ts` (ADR-0019), `components/ui/` primitives
+  ([[components/ui]]), `src/utils/format.ts`, and a `ClothingStore` JSON-LD node.
+  Customer ratings are deliberately **not** in the JSON-LD — self-serving review
+  markup is against Google's guidelines — so the quotes stay visible content only.
+  Every product and category link goes to WhatsApp rather than a catalogue route
+  (ADR-0021).
+- **`three` added; hero swing-tag scene shipped** — see [[hero-scene]] and
+  [[tech-stack]]. Built to [[optimize-3d-scene]] from the start rather than
+  optimised after: one tier read at construction (`src/lib/scene/device.ts`),
+  pixel ratio clamped per tier (mobile 1.0 / tablet 1.25 / desktop 1.5), frame
+  budget 30/45/uncapped fps through the **shared** ticker (no second rAF loop),
+  the loop gated on `IntersectionObserver` + `document.hidden`, programs compiled
+  and the texture uploaded in `prewarm()` before the canvas is revealed, one
+  directional key + a PMREM'd `RoomEnvironment` (no second real light), no
+  pointer listener below the desktop tier, no `resize` listener on touch, and
+  `sceneShouldFreeze()` honouring reduced motion and energy-saver hints by
+  drawing one settled frame and stopping. Bots get no scene at all (ADR-0020).
+  **Not yet measured:** the before/after numbers §14 asks for — there is no
+  "before" (the scene is new) and no production build was run against a real GPU
+  in this session, so the tier budgets are chosen from the skill's guidance, not
+  from this project's own profile.
 - **Released into the public domain (Unlicense)** — the starter now ships a root
   `LICENSE.md` carrying the [Unlicense](https://unlicense.org) and declares
   `"license": "Unlicense"` in `package.json`. Anyone may copy, modify, sell, or

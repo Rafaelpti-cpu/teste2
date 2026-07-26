@@ -21,6 +21,13 @@ interface MetadataProps {
   url?: string;
   /** Open Graph / Twitter image — path under `public/` or absolute URL. */
   ogImage?: string;
+  /**
+   * The image's real pixel size. Declaring the wrong one makes scrapers lay the
+   * preview out badly, so a page using its own image must pass its dimensions —
+   * a product photo is portrait, not the 1200×630 share card.
+   */
+  ogImageWidth?: number;
+  ogImageHeight?: number;
   twitterHandle?: string;
   author?: string;
   siteName?: string;
@@ -31,6 +38,8 @@ export function generateMetadata({
   description = siteConfig.description,
   url = "/",
   ogImage = siteConfig.ogImage,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
   twitterHandle = siteConfig.twitterHandle,
   author = siteConfig.author,
   siteName = siteConfig.name,
@@ -52,8 +61,8 @@ export function generateMetadata({
       url,
       siteName,
       // Dimensions must match the real asset; 1200×630 is the ideal size.
-      images: [{ url: ogImage, width: 900, height: 600 }],
-      locale: "en_US",
+      images: [{ url: ogImage, width: ogImageWidth, height: ogImageHeight }],
+      locale: "pt_BR",
       type: "website",
     },
     twitter: {
