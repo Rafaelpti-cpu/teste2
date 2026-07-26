@@ -39,3 +39,14 @@ create table if not exists public.site_content (
 );
 
 alter table public.site_content enable row level security;
+
+-- Who can sign in to the admin. Passwords are scrypt hashes, never plaintext.
+create table if not exists public.admin_users (
+  id            uuid primary key,
+  email         text        not null unique,
+  name          text        not null,
+  password_hash text        not null,
+  created_at    timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;

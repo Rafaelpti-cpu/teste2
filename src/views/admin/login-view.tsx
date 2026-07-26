@@ -5,9 +5,10 @@ import { useState } from "react";
 
 import { login } from "@/lib/admin/client";
 
-/** Only reachable when `ADMIN_PASSWORD` is set; otherwise the area is open. */
+/** Only reachable once an access exists; before that the area is open. */
 export const LoginView = () => {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -17,7 +18,7 @@ export const LoginView = () => {
     setBusy(true);
     setError(null);
     try {
-      await login(password);
+      await login(email, password);
       router.push("/admin");
       router.refresh();
     } catch (cause) {
@@ -37,6 +38,21 @@ export const LoginView = () => {
         </h1>
 
         <div className="flex flex-col gap-2">
+          <label htmlFor="email" className="text-sm text-foreground">
+            E-mail
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="w-full rounded-control border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none focus-visible:border-action-primary"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
           <label htmlFor="password" className="text-sm text-foreground">
             Senha
           </label>
@@ -47,7 +63,7 @@ export const LoginView = () => {
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-control border border-border-subtle bg-background px-3 py-2 text-sm outline-none focus-visible:border-action-primary"
+            className="w-full rounded-control border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none focus-visible:border-action-primary"
           />
         </div>
 

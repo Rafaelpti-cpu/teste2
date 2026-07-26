@@ -53,14 +53,43 @@ Verified at 375 × 812: no horizontal overflow on the list or the form.
 
 ## Access
 
-Off by default, at the shop's request, while the site is unpublished. Set
-`ADMIN_PASSWORD` and the whole area locks — pages redirect to `/admin/entrar`,
-endpoints answer 401.
+Named users with e-mail and password, managed at **/admin/acessos**.
 
-The session is a **signed cookie, not a session store**: an HMAC of a fixed
-subject keyed by the password. It verifies with no database, and changing the
-password invalidates every cookie. HttpOnly, SameSite=Lax, Secure in production,
-30 days. Login attempts are throttled per IP, 8 per minute, in process.
+The area is **open while no access exists** — the shop asked to work without a
+login before launch. Create the first one and everything locks: pages redirect
+to `/admin/entrar`, endpoints answer 401.
+
+### Passwords are never stored
+
+`lib/admin/users.ts` keeps a **scrypt hash with a random per-user salt**
+(`scrypt$<salt>$<hash>`), so the stored record cannot be turned back into the
+password — not by us, not by whoever holds the database. A forgotten password is
+*replaced*, never recovered. `toPublic()` strips the hash before anything
+reaches the API, and the login answers "E-mail ou senha incorretos" for both a
+wrong password and an unknown e-mail, so it cannot be used to discover which
+addresses exist.
+
+### The session
+
+A signed cookie, not a session table: `<userId>.<hmac>`, where the HMAC is keyed
+by **that user's password hash**. One lookup verifies it, no extra secret needs
+configuring, and changing a password invalidates every cookie that user had —
+including their own, which is why a self password change signs you out.
+HttpOnly, SameSite=Lax, Secure in production, 30 days. Login attempts are
+throttled per IP, 8 per minute, in process.
+
+### The first access
+
+`ensureSeedUser()` turns `ADMIN_EMAIL` + `ADMIN_PASSWORD` into a real user the
+first time the admin is opened, hashing the password. After that the variables
+are never read again — the admin owns the accesses.
+
+### Guards worth knowing
+
+- You cannot delete your own access.
+- You cannot delete the last one.
+- E-mails are compared lower-cased, so `LOJA@` and `loja@` are the same access.
+- Minimum password length is 8.
 
 > [!warning] The guard is not in the layout
 > `app/admin/layout.tsx` also wraps `/admin/entrar`, so redirecting from it

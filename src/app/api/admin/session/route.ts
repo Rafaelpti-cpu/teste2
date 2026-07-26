@@ -3,18 +3,21 @@ import { z } from "zod";
 
 import {
   ADMIN_COOKIE,
+  authenticate,
   createSessionToken,
   isAdminLocked,
-  verifyPassword,
 } from "@/lib/admin/auth";
 import { ApiError, handle } from "@/lib/api";
 
 /**
- * Admin session. Only meaningful once `ADMIN_PASSWORD` is set — without it the
- * area is open and there is nothing to log into.
+ * Admin session. Only meaningful once an access exists — before that the area
+ * is open and there is nothing to log into.
  */
 
-const loginSchema = z.object({ password: z.string().min(1) });
+const loginSchema = z.object({
+  email: z.string().trim().min(1, "Informe o e-mail."),
+  password: z.string().min(1, "Informe a senha."),
+});
 
 /** Naive in-process throttle. Enough to make guessing slow on a single box. */
 const attempts = new Map<string, { count: number; firstAt: number }>();
@@ -36,19 +39,21 @@ const throttle = (key: string) => {
 };
 
 export const POST = handle(async (req) => {
-  if (!isAdminLocked()) {
+  if (!(await isAdminLocked())) {
     throw new ApiError(400, "admin_open", "O admin está aberto, sem senha.");
   }
 
   throttle(req.headers.get("x-forwarded-for") ?? "local");
 
-  const { password } = loginSchema.parse(await req.json());
-  if (!verifyPassword(password)) {
-    throw new ApiError(401, "invalid_password", "Senha incorreta.");
+  const { email, password } = loginSchema.parse(await req.json());
+  const user = await authenticate(email, password);
+  if (!user) {
+    // One message for both cases, so it cannot be used to discover e-mails.
+    throw new ApiError(401, "invalid_credentials", "E-mail ou senha incorretos.");
   }
 
-  const response = NextResponse.json({ data: { authenticated: true } });
-  response.cookies.set(ADMIN_COOKIE, createSessionToken(), {
+  const response = NextResponse.json({ data: { user } });
+  response.cookies.set(ADMIN_COOKIE, await createSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

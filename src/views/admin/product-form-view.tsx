@@ -19,7 +19,7 @@ export const ProductFormView = async ({ id }: ProductFormViewProps) => {
   return (
     <AdminShell
       backend={getCatalogBackend()}
-      locked={isAdminLocked()}
+      locked={await isAdminLocked()}
       title={product ? "Editar peça" : "Nova peça"}
     >
       <ProductForm product={product ?? undefined} />

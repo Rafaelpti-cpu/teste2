@@ -30,10 +30,40 @@ export const deleteProduct = (id: string) =>
     method: "DELETE",
   });
 
-export const login = (password: string) =>
-  apiFetch<{ authenticated: boolean }>("/api/admin/session", {
+export const login = (email: string, password: string) =>
+  apiFetch<{ user: AdminUserSummary }>("/api/admin/session", {
     method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+}
+
+export const listUsers = () => apiFetch<AdminUserSummary[]>("/api/admin/users");
+
+export const createUser = (input: {
+  email: string;
+  name: string;
+  password: string;
+}) =>
+  apiFetch<AdminUserSummary>("/api/admin/users", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const changeUserPassword = (id: string, password: string) =>
+  apiFetch<{ updated: boolean }>(`/api/admin/users/${id}`, {
+    method: "PATCH",
     body: JSON.stringify({ password }),
+  });
+
+export const deleteUser = (id: string) =>
+  apiFetch<{ removed: boolean }>(`/api/admin/users/${id}`, {
+    method: "DELETE",
   });
 
 export const logout = () =>

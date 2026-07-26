@@ -20,7 +20,7 @@ export const AdminProductsView = async () => {
   return (
     <AdminShell
       backend={backend}
-      locked={isAdminLocked()}
+      locked={await isAdminLocked()}
       tab="produtos"
       title="Produtos"
       action={

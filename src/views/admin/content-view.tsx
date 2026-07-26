@@ -16,7 +16,7 @@ export const AdminContentView = async () => {
   return (
     <AdminShell
       backend={getCatalogBackend()}
-      locked={isAdminLocked()}
+      locked={await isAdminLocked()}
       tab="textos"
       title="Textos do site"
     >

@@ -1,13 +1,15 @@
 /**
  * Admin access control.
  *
- * Off by default, on purpose: the shop asked to work without a login while the
- * site is unpublished. Set `ADMIN_PASSWORD` and the whole area — pages *and*
- * endpoints — starts demanding it, with no other change.
+ * The area is **open while no access exists** — the shop asked to work without
+ * a login before launch. Create the first access (via `ADMIN_EMAIL` /
+ * `ADMIN_PASSWORD`, or from the admin itself) and everything locks: pages
+ * redirect, endpoints answer 401.
  *
- * The session is a signed cookie, not a stored session: the value is an HMAC of
- * a fixed subject keyed by the password, so it verifies without any session
- * table, and changing the password invalidates every existing cookie.
+ * The session is a signed cookie, not a session table: `<userId>.<hmac>`, where
+ * the HMAC is keyed by that user's **password hash**. It verifies with one
+ * lookup, needs no extra secret to configure, and changing a password
+ * invalidates every cookie that user had.
  *
  * 📖 Docs: obsidian/backend/admin-area.md
  */
@@ -17,17 +19,20 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
+import {
+  ensureSeedUser,
+  findUserById,
+  listUsers,
+  toPublic,
+  verifyPassword,
+  type PublicAdminUser,
+} from "@/lib/admin/users";
 
 export const ADMIN_COOKIE = "renova_admin";
-const SUBJECT = "renova-admin-v1";
+const SUBJECT = "renova-admin-v2";
 
-const getPassword = () => process.env.ADMIN_PASSWORD || null;
-
-/** `true` once a password exists — the admin is locked from that moment. */
-export const isAdminLocked = () => getPassword() !== null;
-
-const sign = (password: string) =>
-  createHmac("sha256", password).update(SUBJECT).digest("hex");
+const sign = (userId: string, passwordHash: string) =>
+  createHmac("sha256", passwordHash).update(`${SUBJECT}:${userId}`).digest("hex");
 
 /** Constant-time compare, so a wrong token cannot be found byte by byte. */
 const matches = (candidate: string, expected: string) => {
@@ -36,26 +41,49 @@ const matches = (candidate: string, expected: string) => {
   return a.length === b.length && timingSafeEqual(a, b);
 };
 
-export const verifyPassword = (candidate: string) => {
-  const password = getPassword();
-  return password !== null && matches(candidate, password);
-};
+/** `true` once at least one access exists — the admin is locked from then on. */
+export async function isAdminLocked(): Promise<boolean> {
+  await ensureSeedUser();
+  return (await listUsers()).length > 0;
+}
 
-export const createSessionToken = () => {
-  const password = getPassword();
-  if (!password) {
-    throw new ApiError(400, "admin_open", "O admin não tem senha configurada.");
-  }
-  return sign(password);
-};
+export async function createSessionToken(userId: string): Promise<string> {
+  const user = await findUserById(userId);
+  if (!user) throw new ApiError(404, "not_found", "Acesso não encontrado.");
+  return `${user.id}.${sign(user.id, user.passwordHash)}`;
+}
 
-/** Whether the current request carries a valid session. Open mode is always true. */
-export async function hasAdminSession(): Promise<boolean> {
-  const password = getPassword();
-  if (!password) return true;
+/** Checks the e-mail and password pair. Returns the user, or `null`. */
+export async function authenticate(
+  email: string,
+  password: string,
+): Promise<PublicAdminUser | null> {
+  const wanted = email.trim().toLowerCase();
+  const user = (await listUsers()).find((item) => item.email === wanted);
+  if (!user || !verifyPassword(password, user.passwordHash)) return null;
+  return toPublic(user);
+}
 
+/** Who is signed in, or `null`. Open mode has no user and still returns `null`. */
+export async function getCurrentUser(): Promise<PublicAdminUser | null> {
   const token = (await cookies()).get(ADMIN_COOKIE)?.value;
-  return typeof token === "string" && matches(token, sign(password));
+  if (!token) return null;
+
+  const [userId, signature] = token.split(".");
+  if (!userId || !signature) return null;
+
+  const user = await findUserById(userId);
+  if (!user) return null;
+
+  return matches(signature, sign(user.id, user.passwordHash))
+    ? toPublic(user)
+    : null;
+}
+
+/** Whether this request may act. Always true while no access exists. */
+export async function hasAdminSession(): Promise<boolean> {
+  if (!(await isAdminLocked())) return true;
+  return (await getCurrentUser()) !== null;
 }
 
 /** Guard for route handlers — throws 401 when the session is missing. */

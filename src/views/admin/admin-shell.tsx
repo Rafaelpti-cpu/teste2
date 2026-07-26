@@ -2,14 +2,14 @@ import Link from "next/link";
 
 import type { CatalogBackend } from "@/lib/catalog/store";
 
-export type AdminTab = "produtos" | "textos";
+export type AdminTab = "produtos" | "textos" | "acessos";
 
 export interface AdminShellProps {
   title: string;
   children: React.ReactNode;
   action?: React.ReactNode;
   backend: CatalogBackend;
-  /** Whether `ADMIN_PASSWORD` is set. */
+  /** Whether any access exists — the area is open until the first one. */
   locked: boolean;
   /** Which nav entry is current. Omit on pages that are not a tab (the form). */
   tab?: AdminTab;
@@ -23,6 +23,7 @@ const BACKEND_LABEL: Record<CatalogBackend, string> = {
 const TABS: { id: AdminTab; label: string; href: string }[] = [
   { id: "produtos", label: "Produtos", href: "/admin" },
   { id: "textos", label: "Textos do site", href: "/admin/textos" },
+  { id: "acessos", label: "Acessos", href: "/admin/acessos" },
 ];
 
 /** Chrome shared by every admin page: header, tabs, warnings, page title. */
@@ -76,9 +77,9 @@ export const AdminShell = ({
           className="mb-6 rounded-card border border-decor-accent bg-surface-accent px-4 py-3 text-sm text-foreground"
         >
           <strong className="font-medium">Esta área está sem senha.</strong>{" "}
-          Antes de publicar o site, defina <code>ADMIN_PASSWORD</code> no
-          ambiente — qualquer pessoa com o endereço consegue editar e excluir
-          produtos.
+          Antes de publicar o site, crie o primeiro acesso definindo{" "}
+          <code>ADMIN_EMAIL</code> e <code>ADMIN_PASSWORD</code> no ambiente —
+          qualquer pessoa com o endereço consegue editar e excluir produtos.
         </p>
       )}
 
