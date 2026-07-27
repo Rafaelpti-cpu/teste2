@@ -100,14 +100,28 @@ export const SiteFooter = ({ nav, store }: SiteFooterProps) => (
       >
         Política de privacidade
       </Link>
-      {/* The shop's own door. Discreet rather than hidden: the area is
-          `noindex` and disallowed in robots.txt, so it costs nothing here and
-          saves typing the address on a phone. */}
+      {/* The shop's own door — a padlock rather than a sentence, so it reads as
+          staff-only. The icon is small, the tap target is not: the link is
+          44px so a thumb finds it on a phone. */}
       <Link
         href="/admin"
-        className="underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+        aria-label="Área administrativa"
+        title="Área administrativa"
+        className="-m-3 flex size-11 items-center justify-center rounded-control text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
       >
-        Área administrativa
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="4" y="10" width="16" height="10" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </svg>
       </Link>
     </div>
   </footer>

@@ -20,6 +20,8 @@ import { Marquee } from "./sections/marquee";
 import { Prices } from "./sections/prices";
 import { Products } from "./sections/products";
 import { Reviews } from "./sections/reviews";
+import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
+
 import { SiteFooter } from "./sections/site-footer";
 import { SiteHeader } from "./sections/site-header";
 import { VipBand } from "./sections/vip-band";
@@ -62,6 +64,8 @@ export const HomeView = async () => {
       </main>
 
       <SiteFooter nav={nav} store={store} />
+
+      <WhatsAppFab href={store.whatsappHref} />
     </>
   );
 };

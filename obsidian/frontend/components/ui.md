@@ -62,6 +62,22 @@ product page.
 > copies would eventually describe the same piece differently. See
 > [[admin-area]] and [[decisions-log]] ADR-0024.
 
+## `<WhatsAppFab>` — `whatsapp-fab.tsx`
+
+Floating WhatsApp button, bottom-right on every public page. `"use client"`.
+
+The halo pulses on the **app-wide ticker** (`useLoop`), not a CSS animation:
+`@keyframes` are banned here and a spring cannot express a loop. The callback
+writes `transform` and `opacity` on a ref, so it never re-renders React, and it
+is skipped entirely under `prefers-reduced-motion`.
+
+It returns `null` while the cookie banner is up — both live bottom-right, and a
+button behind a banner is worse than no button. It is mounted by the three
+public views, never by the admin.
+
+WhatsApp's green is a third party's brand colour, so it is a Tier-1 primitive
+(`--raw-color-whatsapp`) with its own action role — not a hex in a class.
+
 ## Related
 
 [[component-conventions]] · [[components/animation-springs]] · [[text-engine]] ·

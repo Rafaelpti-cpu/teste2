@@ -19,6 +19,8 @@ import { readSiteContent } from "@/lib/content";
 import { getCatalogStore } from "@/lib/catalog";
 import { getProductStructuredData } from "@/utils/seo/structured-data";
 
+import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
+
 import { SiteFooter } from "@/views/home/sections/site-footer";
 import { SiteHeader } from "@/views/home/sections/site-header";
 
@@ -144,6 +146,8 @@ export const ProductView = async ({ slug }: ProductViewProps) => {
       </main>
 
       <SiteFooter nav={nav} store={store} />
+
+      <WhatsAppFab href={store.whatsappHref} />
     </>
   );
 };

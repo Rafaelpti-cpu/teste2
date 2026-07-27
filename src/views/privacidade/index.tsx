@@ -13,6 +13,8 @@ import Link from "next/link";
 
 import { readSiteContent } from "@/lib/content";
 
+import { WhatsAppFab } from "@/components/ui/whatsapp-fab";
+
 import { SiteFooter } from "@/views/home/sections/site-footer";
 import { SiteHeader } from "@/views/home/sections/site-header";
 
@@ -114,6 +116,8 @@ export const PrivacyView = async () => {
       </main>
 
       <SiteFooter nav={nav} store={store} />
+
+      <WhatsAppFab href={store.whatsappHref} />
     </>
   );
 };
