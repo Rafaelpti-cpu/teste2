@@ -1,12 +1,51 @@
 ---
 tags: [meta, decision]
-updated: 2026-07-25
+updated: 2026-07-27
 ---
 
 # Decisions Log (ADRs)
 
 Architecture Decision Records. Each entry captures a choice, its context, and its
 consequences. Use [[templates/adr-note]] for new entries. Newest first.
+
+---
+
+## ADR-0026 — The site ships one appearance, and says so to the browser
+
+- **Status:** Accepted
+- **Date:** 2026-07-27
+
+**Context.** The starter carries a `@media (prefers-color-scheme: dark)` block
+overriding the Tier-2 roles, so the site followed the visitor's device. The shop
+opened the published site on a phone set to dark and reported it as "rosa" — with
+a dark ground, the rose accents were the only colour left and read as the whole
+palette. Two of the brand's own assets made it worse: the banner and the footer
+lockup are light artwork with no dark counterpart, and the hero swing tag, whose
+`--tag-*` roles are deliberately outside the themed set, became a bright card
+floating on black.
+
+Asked to choose, the shop chose cream, always.
+
+**Decision.** Delete the dark block. The Tier-2 roles have exactly one set of
+values. `:root` declares `color-scheme: light` so the browser also draws native
+UI — form controls, the colour input in the admin, scrollbars — to match, and so
+Chrome's automatic darkening leaves the page alone. `--tag-paper` moves from
+cream to white: on a cream ground the cream card had no edge and read as a ghost
+at phone size.
+
+**Consequences.** Every visitor sees what the shop sees, which is what they can
+actually check before publishing. Photographs of clothing — the entire catalogue
+— sit on the ground they were shot against.
+
+The cost is real and accepted: a visitor who prefers dark gets a bright page.
+The three-tier convention (ADR-0015) is untouched and no Tier-1 or `@theme`
+entry moved, so a second appearance is still a block of Tier-2 declarations —
+that seam is why the rule survives even with nothing overriding it today.
+
+**Also:** the hero camera moved 8.4 → 7.8. Unrelated to colour, same report —
+on a phone the canvas is ~240 px wide and the tag filled a third of it. Closer
+framing buys size out of empty air rather than out of page height, which the
+shop had separately asked to cut. See [[hero-scene]] for the clipping budget.
 
 ---
 

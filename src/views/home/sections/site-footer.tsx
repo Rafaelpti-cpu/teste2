@@ -14,10 +14,11 @@ export const SiteFooter = ({ nav, store }: SiteFooterProps) => (
       <div className="flex flex-col items-start gap-4">
         {/*
           Built from the mark plus text rather than the lockup image, for the
-          same reason the header is: the lockup's wordmark is black artwork, so
-          it disappears against the dark theme. Text takes the theme's colour.
-          `items-start` above matters too — a flex column stretches its children,
-          which was distorting the image regardless of `w-auto`.
+          same reason the header is: the lockup's wordmark is baked-in black
+          artwork, while text takes the `foreground` token and stays in step
+          with the palette. `items-start` above matters too — a flex column
+          stretches its children, which was distorting the image regardless of
+          `w-auto`.
         */}
         <div className="flex items-center gap-3">
           <Image

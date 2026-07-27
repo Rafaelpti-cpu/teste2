@@ -151,10 +151,13 @@ export class HangTagScene {
     this.renderer.setPixelRatio(this.budget.pixelRatio);
 
     // Framed for the *swung* tag, not the resting one: at MAX_SWING the far
-    // bottom corner is ~1.6 units off centre, and a 4:5 canvas at this distance
-    // gives ~2.2 of half-width. Pull the camera in and the corners get clipped.
+    // bottom corner reaches ~1.53 units off centre, and a 4:5 canvas here gives
+    // ~1.9 of half-width. Pull the camera closer than this and the corners clip.
+    // 7.8 rather than 8.4 because on a phone the canvas is ~240px wide: at 8.4
+    // the tag filled barely a third of it and read as a speck rather than a
+    // printed card. This spends the empty air instead of page height.
     this.camera = new PerspectiveCamera(34, 1, 0.1, 20);
-    this.camera.position.set(0, 0, 8.4);
+    this.camera.position.set(0, 0, 7.8);
 
     this.build(colors, fontFamily, mark);
     this.resize();

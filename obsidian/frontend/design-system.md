@@ -44,8 +44,11 @@ Plus the **theme binding**, which is what actually creates the utilities:
 2. **Tier 2 names describe purpose, never appearance.** `--action-primary`, not
    `--blue`. `--surface-raised`, not `--grey-light`. If renaming the colour would
    force renaming the token, the name is wrong.
-3. **Tier 2 is the themeable layer.** Dark mode and any runtime theming override
-   Tier 2 tokens — never Tier 1, never a `@theme` entry.
+3. **Tier 2 is the themeable layer.** Any re-theming overrides Tier 2 tokens —
+   never Tier 1, never a `@theme` entry. This site ships a single appearance
+   (ADR-0026), so today nothing overrides them; the seam is kept because it is
+   what makes a second appearance a block of Tier-2 declarations rather than a
+   rewrite.
 4. **Every `@theme inline` entry is exactly `--<namespace>-<role>: var(--<role>)`.**
    No literals, no `calc()`, no skipping to `var(--raw-*)`.
 5. **kebab-case, singular, unabbreviated.** `--raw-color-neutral-950`, not
@@ -57,10 +60,10 @@ Plus the **theme binding**, which is what actually creates the utilities:
 ### Why Tier 2 is separate from `@theme`
 
 `@theme inline` **inlines** each `var()` into the generated utility. That is what
-makes overriding the Tier 2 token in a `prefers-color-scheme` block cascade into
-every `bg-background` on the page. Binding a literal — or a `var(--raw-*)` —
-directly in `@theme` freezes the value at build time and silently breaks theming.
-The indirection is load-bearing, not ceremony.
+lets a later override of the Tier 2 token — in a media query, on a `[data-theme]`
+attribute, anywhere — cascade into every `bg-background` on the page. Binding a
+literal — or a `var(--raw-*)` — directly in `@theme` freezes the value at build
+time and silently breaks theming. The indirection is load-bearing, not ceremony.
 
 ### Namespaces that generate utilities
 
@@ -135,9 +138,10 @@ every case (motion is spring-based, so there are no keyframes to co-locate).
 > `cream`/`ink` neutral ramp, and the Tier-2 roles `--surface-raised/muted/
 > inverse/accent`, `--foreground-muted/inverse/accent`, `--action-primary[-hover]
 > [-foreground]`, `--border-subtle/strong` and `--decor-accent[-soft]`, plus
-> `--radius-card/panel/pill/control`. Dark mode overrides **only** Tier 2 —
-> except `--tag-paper/-ink/-ink-muted/-accent`, which describe a printed object
-> and are the one documented unthemed set ([[hero-scene]], ADR-0018).
+> `--radius-card/panel/pill/control`. The site ships **one** appearance: the
+> starter's dark-mode block was removed and `:root` declares `color-scheme: light`
+> (ADR-0026). `--tag-paper/-ink/-ink-muted/-accent` describe a printed object
+> rather than the page, and stay separate from the page roles ([[hero-scene]]).
 > There is one `@utility` — `container-page`, the page gutter (a pure-utility
 > combo with no markup, the ADR-0012 case for `@utility`).
 > Type pairs **Jost** (`--font-display`) with **Onest** (`--font-sans`).

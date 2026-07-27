@@ -19,7 +19,7 @@ export const Hero = ({ content, withScene }: HeroProps) => (
     {/* Soft brand glow behind the tag — decorative. */}
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute -top-24 right-0 hidden size-[38rem] rounded-pill bg-surface-accent blur-3xl lg:block"
+      className="pointer-events-none absolute -top-10 right-[-6rem] size-[22rem] rounded-pill bg-surface-accent blur-3xl lg:-top-24 lg:right-0 lg:size-[38rem]"
     />
 
     <div className="container-page relative grid gap-8 pt-6 pb-10 md:gap-10 md:pt-10 md:pb-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-6 lg:pt-16 lg:pb-20">
@@ -69,7 +69,7 @@ export const Hero = ({ content, withScene }: HeroProps) => (
         {withScene ? (
           <LazyHangTag />
         ) : (
-          <div className="flex aspect-[4/5] w-full max-w-[13rem] items-center justify-center sm:max-w-[24rem]">
+          <div className="flex aspect-[4/5] w-full max-w-[15rem] items-center justify-center sm:max-w-[24rem]">
             <TagCard />
           </div>
         )}

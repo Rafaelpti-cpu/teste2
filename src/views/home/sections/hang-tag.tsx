@@ -31,9 +31,9 @@ export const HangTag = () => {
     let scene: HangTagScene | null = null;
     let cancelled = false;
 
-    // `--tag-*` roles have no dark-mode override on purpose: the tag is a
-    // printed object, so it keeps its own colours in either theme. That also
-    // means the scene never has to react to a theme change after construction.
+    // The site has a single appearance (ADR-0026), so these roles resolve once
+    // and never change — the scene never has to react to a theme swap after
+    // construction.
     const styles = getComputedStyle(container);
     const colors = {
       paper: token(styles, "--tag-paper", "#fbf8f6"),
@@ -122,7 +122,7 @@ export const HangTag = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex aspect-[4/5] w-full max-w-[13rem] sm:max-w-[24rem] items-center justify-center font-display"
+      className="relative flex aspect-[4/5] w-full max-w-[15rem] items-center justify-center font-display sm:max-w-[24rem]"
     >
       <Spring
         tag="div"

@@ -45,15 +45,18 @@ section to what the code actually does:
 | 13 | Dispose | Every geometry, material, texture and listener is tracked and released in `dispose()` |
 
 **Deliberate deviation:** `alpha: true`. §7 prefers an opaque canvas, but the tag
-floats over the page's cream background — an opaque canvas would need the page
-colour baked in and would break in dark mode.
+floats over the page's cream background *and* over the brand glow behind it — an
+opaque canvas would have to bake in a colour that changes with what is behind it.
 
 ## Two things that are easy to break
 
 **The frustum is framed around the *swung* tag, not the resting one.** The
-pendulum's arc is wider than the card, so the camera distance (8.4), the pivot
+pendulum's arc is wider than the card, so the camera distance (7.8), the pivot
 height and `MAX_SWING` (0.2 rad) are a set — change one and the far bottom
-corner clips against the canvas edge. The loop also hard-stops the angle at
+corner clips against the canvas edge. At 7.8 on a 4:5 canvas the far bottom
+corner sits at ~1.53 units against a half-width of ~1.9; that ~20 % is the whole
+margin. Moving the camera any closer, widening the swing, or lengthening the
+cord all spend the same budget. The loop also hard-stops the angle at
 `MAX_SWING` and bounces it back, so no pointer flick can push it out of frame.
 
 **The lighting is deliberately under 1.0 total** (key 1.15 + ambient 0.35 +
@@ -64,13 +67,15 @@ ever looks washed out, that is the first thing to check, not the texture.
 ## The tag has its own colours
 
 The scene reads `--tag-paper` / `--tag-ink` / `--tag-ink-muted` / `--tag-accent`,
-**not** the page's surface and foreground roles. Those four are the only Tier-2
-tokens with no dark-mode override, on purpose: a swing tag is a printed object
-and looks the same under any light.
+**not** the page's surface and foreground roles. A swing tag is a printed object:
+its colours belong to the card, not to the page it hangs in front of. `--tag-paper`
+is white rather than cream — on the cream ground a cream card had almost no edge
+and read as a ghost on a phone.
 
 Two things fall out of that. The scene never has to react to a theme change
 after construction (it samples the tokens once, in the React leaf, and builds
-the texture from them). And `<TagCard>` — which uses the same roles — matches
+the texture from them; the site has one appearance anyway — see [[decisions-log]]
+ADR-0026). And `<TagCard>` — which uses the same roles — matches
 the canvas exactly, so the cross-fade between them is invisible.
 
 **Reduced motion / energy saver:** `sceneShouldFreeze()` settles the pendulum,

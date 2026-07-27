@@ -70,46 +70,52 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
       className="m-auto w-[min(56rem,92vw)] rounded-panel bg-background p-0 text-foreground backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
       {product && (
+        /*
+          Column, not a single scrolling box: the photo alone is taller than a
+          phone, so a CTA placed after it sat below the fold *inside* the
+          dialog — the piece looked like it had no way to buy. The content
+          scrolls; the button does not move.
+        */
         <div
           onClick={(event) => event.stopPropagation()}
-          className="max-h-[88lvh] overflow-y-auto p-5 md:p-8"
+          className="flex max-h-[88lvh] flex-col"
         >
-          <div className="flex items-start justify-between gap-4 pb-4">
-            <Link
-              href={`/produto/${product.slug}`}
-              className="text-xs text-foreground-muted underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
-            >
-              Abrir página da peça
-            </Link>
-            <button
-              type="button"
-              onClick={() => ref.current?.close()}
-              aria-label="Fechar"
-              className="rounded-pill px-3 py-1 text-xl leading-none text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
-            >
-              ×
-            </button>
+          <div className="flex-1 overflow-y-auto p-5 md:p-8">
+            <div className="flex items-start justify-between gap-4 pb-4">
+              <Link
+                href={`/produto/${product.slug}`}
+                className="text-xs text-foreground-muted underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+              >
+                Abrir página da peça
+              </Link>
+              <button
+                type="button"
+                onClick={() => ref.current?.close()}
+                aria-label="Fechar"
+                className="-m-2 flex size-10 items-center justify-center rounded-pill text-xl leading-none text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+              <ProductGallery images={product.images} name={product.name} />
+              <ProductDetails product={product} />
+            </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-            <ProductGallery images={product.images} name={product.name} />
-
-            <div className="flex flex-col gap-6">
-              <ProductDetails product={product} />
-
-              <a
-                href={whatsappProductHref(product)}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center justify-center rounded-pill bg-action-primary px-6 py-3.5 text-sm font-medium text-action-primary-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-action-primary-hover"
-              >
-                Quero esta peça — falar no WhatsApp
-              </a>
-              <p className="text-xs text-foreground-muted">
-                A mensagem já vai com a foto e o nome da peça, para a gente saber
-                exatamente qual é.
-              </p>
-            </div>
+          <div className="flex flex-col gap-2 border-t border-border-subtle bg-background p-4 md:px-8 md:pb-8">
+            <a
+              href={whatsappProductHref(product)}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center justify-center rounded-pill bg-action-primary px-6 py-4 text-sm font-medium text-action-primary-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-action-primary-hover"
+            >
+              Quero esta peça — falar no WhatsApp
+            </a>
+            <p className="text-center text-xs text-foreground-muted">
+              A mensagem já vai com a foto e o nome da peça.
+            </p>
           </div>
         </div>
       )}

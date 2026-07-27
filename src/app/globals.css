@@ -54,6 +54,14 @@
    Grammar: --<role>[-<variant>][-<state>]
    --------------------------------------------------------------------------- */
 :root {
+  /* The site has one look, chosen by the shop: cream with rose. Its own
+     artwork — the banner, the lockup, the swing tag — is light, and composes
+     with this ground rather than glaring against a dark one. Declaring
+     `color-scheme` makes the browser draw native controls (file pickers, the
+     colour input, scrollbars) to match, including for visitors whose device
+     is set to dark. ADR-0026. */
+  color-scheme: light;
+
   --background: var(--raw-color-cream-50);
   --foreground: var(--raw-color-ink-900);
 
@@ -81,10 +89,10 @@
   --decor-accent: var(--raw-color-rose-500);
   --decor-accent-soft: var(--raw-color-rose-200);
 
-  /* The hero swing tag is a physical object — printed card, the same cream in
-     any light. These roles deliberately have no dark-mode override; see
-     obsidian/frontend/hero-scene.md. */
-  --tag-paper: var(--raw-color-cream-100);
+  /* The hero swing tag is a physical object — printed card. White, not cream:
+     against the cream page a cream card had almost no edge and read as a
+     ghost on a phone. See obsidian/frontend/hero-scene.md. */
+  --tag-paper: var(--raw-color-white);
   --tag-ink: var(--raw-color-ink-900);
   --tag-ink-muted: var(--raw-color-ink-800);
   --tag-accent: var(--raw-color-rose-600);
@@ -96,31 +104,6 @@
   --radius-panel: var(--raw-radius-large);
   --radius-pill: var(--raw-radius-full);
   --radius-control: var(--raw-radius-small);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--raw-color-ink-900);
-    --foreground: var(--raw-color-cream-50);
-
-    --surface-raised: var(--raw-color-ink-800);
-    --surface-muted: var(--raw-color-ink-800);
-    --surface-inverse: var(--raw-color-cream-50);
-    --surface-accent: var(--raw-color-ink-800);
-
-    --foreground-muted: var(--raw-color-cream-200);
-    --foreground-inverse: var(--raw-color-ink-900);
-    --foreground-accent: var(--raw-color-rose-400);
-
-    --action-primary: var(--raw-color-rose-500);
-    --action-primary-hover: var(--raw-color-rose-400);
-    --action-primary-foreground: var(--raw-color-ink-900);
-
-    --border-subtle: var(--raw-color-ink-500);
-    --border-strong: var(--raw-color-cream-200);
-    --decor-accent: var(--raw-color-rose-500);
-    --decor-accent-soft: var(--raw-color-rose-700);
-  }
 }
 
 /* ---------------------------------------------------------------------------

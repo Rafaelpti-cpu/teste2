@@ -31,7 +31,7 @@ export const ProductGallery = ({
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card bg-surface-muted">
+      <div className="relative aspect-[3/4] max-h-[46lvh] w-full overflow-hidden rounded-card bg-surface-muted md:max-h-none">
         {current && (
           <Image
             key={current}

@@ -1,12 +1,35 @@
 ---
 tags: [meta, changelog]
-updated: 2026-07-25
+updated: 2026-07-27
 ---
 
 # Changelog
 
 Chronological log of notable changes to the project. Newest first.
 This is a human-curated log — not a mirror of `git log`.
+
+## 2026-07-27
+
+Three reports from the shop, all from a phone opening the published site.
+
+- **"O site está rosa no celular"** — the phone was set to dark, so the starter's
+  `prefers-color-scheme` block was overriding the palette and the rose accents
+  were the only colour left standing. The site now ships **one** appearance:
+  the dark block is gone and `:root` declares `color-scheme: light`, which also
+  keeps the browser from darkening native controls and the admin's colour input.
+  ADR-0026.
+- **"A etiqueta pendurada ficou estranha"** — same root cause plus a real
+  sizing problem. The `--tag-*` roles are outside the themed set on purpose, so
+  on a dark ground the tag was a bright card floating on black. `--tag-paper`
+  also moved cream → white (on cream it had no edge at phone size), and the
+  camera moved 8.4 → 7.8 with the mobile canvas 13rem → 15rem: the tag had been
+  filling barely a third of its box. Frustum margin at the swing limit is now
+  ~21 % — see [[hero-scene]] before touching it again.
+- **"Abre o produto e fica cortado, sem botão de compra"** — the dialog was one
+  scrolling box, and a phone-height photo pushed the CTA below the fold *inside*
+  the dialog. It is now a column: the content scrolls, the WhatsApp button sits
+  in a fixed footer bar that never moves. Verified visible without scrolling at
+  375×812 and 360×640. The gallery frame is capped at `46lvh` on phones.
 
 ## 2026-07-26
 
