@@ -5,11 +5,20 @@ import { RevealHeading } from "@/components/ui/reveal-heading";
 import { ButtonLink } from "@/components/ui/button-link";
 import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/types/catalog";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useCatalogFilter } from "./catalog-filter";
 import { ProductCard } from "./product-card";
 import { ProductDialog } from "./product-dialog";
+
+/**
+ * How many pieces the grid opens with, and how many each "ver mais" adds.
+ *
+ * Eight is four rows on a phone. All forty at once made this section ten and a
+ * half screens tall — more than half the page — and everything below it
+ * unreachable by thumb.
+ */
+const PAGE_SIZE = 8;
 
 export interface ProductsProps {
   copy: { eyebrow: string; title: string; ctaLabel: string };
@@ -31,6 +40,11 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
   const setActive = useCatalogFilter((state) => state.setCategory);
   // Which piece is open. Local, because the grid is the only thing that opens it.
   const [opened, setOpened] = useState<Product | null>(null);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+
+  // Switching category starts the list over — otherwise picking a category
+  // after "ver mais" would open it already scrolled deep.
+  useEffect(() => setVisible(PAGE_SIZE), [active]);
 
   const counts = new Map<ProductCategory, number>();
   for (const product of products) {
@@ -38,9 +52,11 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
   }
 
   const available = PRODUCT_CATEGORIES.filter((category) => counts.has(category));
-  const shown = active
+  const matching = active
     ? products.filter((product) => product.category === active)
     : products;
+  const shown = matching.slice(0, visible);
+  const remaining = matching.length - shown.length;
 
   const tab =
     "rounded-pill px-4 py-2 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance";
@@ -49,7 +65,7 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
     <section
       id="novidades"
       aria-labelledby="novidades-title"
-      className="container-page scroll-mt-24 py-16 md:py-24"
+      className="container-page scroll-mt-24 py-10 md:py-24"
     >
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="flex flex-col gap-4">
@@ -119,6 +135,21 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
           />
         ))}
       </ul>
+
+      {remaining > 0 && (
+        <div className="mt-10 flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setVisible((count: number) => count + PAGE_SIZE)}
+            className="rounded-pill border border-border-strong px-8 py-3.5 text-sm font-medium transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-surface-inverse hover:text-foreground-inverse"
+          >
+            Ver mais peças
+          </button>
+          <p className="text-xs text-foreground-muted">
+            Mostrando {shown.length} de {matching.length}
+          </p>
+        </div>
+      )}
 
       <ProductDialog product={opened} onClose={() => setOpened(null)} />
     </section>

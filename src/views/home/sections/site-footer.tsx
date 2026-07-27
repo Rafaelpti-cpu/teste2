@@ -90,24 +90,20 @@ export const SiteFooter = ({ nav, store }: SiteFooterProps) => (
       </ul>
     </div>
 
-    <div className="container-page flex flex-wrap items-center justify-between gap-3 pb-10 text-xs text-foreground-muted">
-      <p>
-        © {new Date().getFullYear()} Renova Closet. Todos os direitos reservados.
-      </p>
-      <Link
-        href="/privacy-policy"
-        className="underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
-      >
-        Política de privacidade
-      </Link>
+    {/*
+      `pe-20` on small screens keeps this row clear of the floating WhatsApp
+      button, which is fixed to the same corner. The padlock also leads the row
+      rather than closing it, so the one thing a customer must never tap by
+      accident is nowhere near the one they are meant to.
+    */}
+    <div className="container-page flex flex-wrap items-center gap-x-4 gap-y-2 pb-10 pe-20 text-xs text-foreground-muted sm:pe-0">
       {/* The shop's own door — a padlock rather than a sentence, so it reads as
-          staff-only. The icon is small, the tap target is not: the link is
-          44px so a thumb finds it on a phone. */}
+          staff-only. The icon is small, the tap target is not. */}
       <Link
         href="/admin"
         aria-label="Área administrativa"
         title="Área administrativa"
-        className="-m-3 flex size-11 items-center justify-center rounded-control text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+        className="-ms-3 -my-3 flex size-11 items-center justify-center rounded-control text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
       >
         <svg
           viewBox="0 0 24 24"
@@ -122,6 +118,17 @@ export const SiteFooter = ({ nav, store }: SiteFooterProps) => (
           <rect x="4" y="10" width="16" height="10" rx="2" />
           <path d="M8 10V7a4 4 0 0 1 8 0v3" />
         </svg>
+      </Link>
+
+      <p>
+        © {new Date().getFullYear()} Renova Closet. Todos os direitos reservados.
+      </p>
+
+      <Link
+        href="/privacy-policy"
+        className="underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground sm:ms-auto"
+      >
+        Política de privacidade
       </Link>
     </div>
   </footer>

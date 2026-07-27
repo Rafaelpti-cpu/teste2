@@ -12,7 +12,7 @@ export const Visit = ({ copy, store }: VisitProps) => (
   <section
     id="visite"
     aria-labelledby="visite-title"
-    className="container-page scroll-mt-24 py-16 md:py-24"
+    className="container-page scroll-mt-24 py-10 md:py-24"
   >
     <div className="grid gap-10 rounded-panel bg-surface-muted px-6 py-12 md:grid-cols-2 md:gap-16 md:px-14 md:py-16">
       <div className="flex flex-col items-start gap-6">

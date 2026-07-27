@@ -29,7 +29,7 @@ export const Categories = ({ copy, categories, products }: CategoriesProps) => {
     <section
       id="categorias"
       aria-labelledby="categorias-title"
-      className="container-page scroll-mt-24 py-16 md:py-24"
+      className="container-page scroll-mt-24 py-10 md:py-24"
     >
       <div className="flex flex-col gap-4 md:max-w-[52ch]">
         <Eyebrow>{copy.eyebrow}</Eyebrow>

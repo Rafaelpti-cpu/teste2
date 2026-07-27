@@ -14,7 +14,7 @@ export const Reviews = ({ copy, content, reviewsHref }: ReviewsProps) => (
   <section
     id="avaliacoes"
     aria-labelledby="avaliacoes-title"
-    className="container-page scroll-mt-24 py-16 md:py-24"
+    className="container-page scroll-mt-24 py-10 md:py-24"
   >
     <div className="flex flex-wrap items-end justify-between gap-6">
       <div className="flex flex-col gap-4">
@@ -36,7 +36,7 @@ export const Reviews = ({ copy, content, reviewsHref }: ReviewsProps) => (
       </p>
     </div>
 
-    <ul className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3 md:gap-6">
+    <ul className="scrollbar-none -mx-6 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 md:mx-0 md:mt-14 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0">
       {content.items.map((review, index) => (
         <ReviewCard key={review.quote} review={review} index={index} />
       ))}

@@ -17,7 +17,7 @@ export const ReviewCard = ({ review, index }: ReviewCardProps) => (
     to={{ opacity: 1, y: 0 }}
     config={{ tension: 120, friction: 26 }}
     delayIn={index * 110}
-    className="h-full"
+    className="w-[82%] shrink-0 snap-start md:w-auto"
   >
     <figure className="flex h-full flex-col justify-between gap-6 rounded-card border border-border-subtle bg-surface-raised p-6 md:p-8">
       <blockquote className="text-base text-foreground">

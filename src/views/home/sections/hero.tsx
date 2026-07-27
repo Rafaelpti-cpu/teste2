@@ -69,7 +69,7 @@ export const Hero = ({ content, withScene }: HeroProps) => (
         {withScene ? (
           <LazyHangTag />
         ) : (
-          <div className="flex aspect-[4/5] w-full max-w-[15rem] items-center justify-center sm:max-w-[24rem]">
+          <div className="flex aspect-[4/5] w-full max-w-[13rem] items-center justify-center sm:max-w-[24rem]">
             <TagCard />
           </div>
         )}

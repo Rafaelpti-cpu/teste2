@@ -49,7 +49,7 @@ export const Prices = ({ copy, products, ctaHref }: PricesProps) => {
     <section
       id="precos"
       aria-labelledby="precos-title"
-      className="container-page scroll-mt-24 py-16 md:py-24"
+      className="container-page scroll-mt-24 py-10 md:py-24"
     >
       <div className="grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
         <div className="flex flex-col items-start gap-4 md:sticky md:top-24 md:self-start">

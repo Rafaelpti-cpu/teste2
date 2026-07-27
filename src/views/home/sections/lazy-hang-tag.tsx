@@ -18,7 +18,7 @@ const HangTag = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex aspect-[4/5] w-full max-w-[15rem] sm:max-w-[24rem] items-center justify-center">
+      <div className="flex aspect-[4/5] w-full max-w-[13rem] sm:max-w-[24rem] items-center justify-center">
         <TagCard />
       </div>
     ),

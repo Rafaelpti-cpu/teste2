@@ -24,7 +24,7 @@ export const HeroPhoto = ({ src, alt }: HeroPhotoProps) => (
     end="bottom top"
     from={{ y: "-7%" }}
     to={{ y: "7%" }}
-    className="relative h-[15rem] overflow-hidden rounded-panel sm:h-[22rem] md:h-[30rem]"
+    className="relative aspect-[1920/786] overflow-hidden rounded-panel md:aspect-auto md:h-[30rem]"
     innerClassName="absolute inset-x-0 -top-[7%] h-[114%]"
   >
     <Image

@@ -122,7 +122,7 @@ export const HangTag = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex aspect-[4/5] w-full max-w-[15rem] sm:max-w-[24rem] items-center justify-center font-display"
+      className="relative flex aspect-[4/5] w-full max-w-[13rem] sm:max-w-[24rem] items-center justify-center font-display"
     >
       <Spring
         tag="div"
