@@ -17,7 +17,7 @@ export interface TagCardProps {
  */
 export const TagCard = ({ className = "" }: TagCardProps) => (
   <figure
-    className={`flex aspect-[2/3] w-[15rem] -rotate-6 flex-col items-center justify-center gap-5 rounded-panel border border-tag-accent/50 bg-tag-paper px-6 py-8 shadow-[0_2rem_4rem_-2rem_rgba(0,0,0,0.35)] ${className}`}
+    className={`flex aspect-[2/3] w-[11rem] -rotate-6 sm:w-[15rem] flex-col items-center justify-center gap-3 rounded-panel sm:gap-5 border border-tag-accent/50 bg-tag-paper px-4 py-5 shadow-[0_2rem_4rem_-2rem_rgba(0,0,0,0.35)] sm:px-6 sm:py-8 ${className}`}
   >
     <span
       aria-hidden="true"

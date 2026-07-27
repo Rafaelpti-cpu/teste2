@@ -22,8 +22,8 @@ export const Hero = ({ content, withScene }: HeroProps) => (
       className="pointer-events-none absolute -top-24 right-0 hidden size-[38rem] rounded-pill bg-surface-accent blur-3xl lg:block"
     />
 
-    <div className="container-page relative grid gap-10 pt-10 pb-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-6 lg:pt-16 lg:pb-20">
-      <div className="flex flex-col items-start gap-7">
+    <div className="container-page relative grid gap-8 pt-6 pb-10 md:gap-10 md:pt-10 md:pb-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-6 lg:pt-16 lg:pb-20">
+      <div className="flex flex-col items-start gap-5 md:gap-7">
         <Eyebrow>{content.eyebrow}</Eyebrow>
 
         <RevealHeading
@@ -50,7 +50,7 @@ export const Hero = ({ content, withScene }: HeroProps) => (
           </ButtonLink>
         </div>
 
-        <dl className="mt-2 flex flex-wrap items-end gap-x-10 gap-y-4">
+        <dl className="mt-1 grid w-full grid-cols-3 gap-4 md:mt-2 md:flex md:w-auto md:flex-wrap md:items-end md:gap-x-10">
           {content.stats.map((stat) => (
             // Reversed visually so the number leads; DOM order stays term → value.
             <div key={stat.label} className="flex flex-col-reverse gap-1">
@@ -69,7 +69,7 @@ export const Hero = ({ content, withScene }: HeroProps) => (
         {withScene ? (
           <LazyHangTag />
         ) : (
-          <div className="flex aspect-[4/5] w-full max-w-[24rem] items-center justify-center">
+          <div className="flex aspect-[4/5] w-full max-w-[15rem] items-center justify-center sm:max-w-[24rem]">
             <TagCard />
           </div>
         )}
