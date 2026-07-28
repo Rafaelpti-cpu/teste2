@@ -5,14 +5,53 @@
  * all speak this language — it is not owned by any one of them.
  */
 
-export const PRODUCT_CATEGORIES = [
+/**
+ * The sections the shop started with — a **suggested order**, not a closed set.
+ *
+ * These four are offered in the admin and, when present, are listed first and
+ * in this order everywhere on the site, because that is the order the shop
+ * arranged its floor in. Anything the shop invents afterwards is a category
+ * like any other and follows them alphabetically.
+ */
+export const DEFAULT_CATEGORIES = [
   "Feminino",
   "Masculino",
   "Infantil",
   "Tênis",
 ] as const;
 
-export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
+/**
+ * Free text, not a union.
+ *
+ * It was a union of the four above until the shop asked to add sections from
+ * the phone, which is the whole point of having an admin — a new section should
+ * not need a developer, a deploy, and a person who knows what `z.enum` is.
+ */
+export type ProductCategory = string;
+
+/** Longest a category name may be. Kept short so the filter chips stay chips. */
+export const CATEGORY_MAX_LENGTH = 40;
+
+/**
+ * The categories actually in use, in the order the site should show them:
+ * the defaults first in their canonical order, then the rest alphabetically.
+ *
+ * Derived from the catalogue rather than stored, so a section appears when its
+ * first piece does and disappears with its last — there is no separate list to
+ * fall out of step.
+ */
+export const categoriesOf = (
+  products: { category: ProductCategory }[],
+): ProductCategory[] => {
+  const present = new Set(products.map((product) => product.category));
+  const defaults = DEFAULT_CATEGORIES.filter((category) =>
+    present.has(category),
+  );
+  const extra = [...present]
+    .filter((category) => !DEFAULT_CATEGORIES.includes(category as never))
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [...defaults, ...extra];
+};
 
 /** A colourway. `hex` drives the swatch; `name` is what the customer reads. */
 export interface ProductColor {

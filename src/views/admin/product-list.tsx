@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/types/catalog";
+import { categoriesOf, type Product, type ProductCategory } from "@/types/catalog";
 
 import { ProductRow } from "./product-row";
 
@@ -68,7 +68,7 @@ export const ProductList = ({ products }: ProductListProps) => {
           >
             Todas {products.length}
           </button>
-          {PRODUCT_CATEGORIES.filter((item) => counts.has(item)).map((item) => (
+          {categoriesOf(products).map((item) => (
             <button
               key={item}
               type="button"

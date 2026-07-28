@@ -2,7 +2,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { RevealHeading } from "@/components/ui/reveal-heading";
 import { RevealText } from "@/components/ui/reveal-text";
-import { PRODUCT_CATEGORIES, type Product } from "@/types/catalog";
+import { categoriesOf, type Product } from "@/types/catalog";
 
 import { PriceRow, type PriceRange } from "./price-row";
 
@@ -30,7 +30,7 @@ export interface PricesProps {
  * Editorial by construction: type and hairlines, no cards, no boxes.
  */
 export const Prices = ({ copy, products, ctaHref }: PricesProps) => {
-  const ranges: PriceRange[] = PRODUCT_CATEGORIES.map((category) => {
+  const ranges: PriceRange[] = categoriesOf(products).map((category) => {
     const inCategory = products.filter((item) => item.category === category);
     return {
       category,

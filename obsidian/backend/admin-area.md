@@ -43,6 +43,21 @@ layout, not desktop convenience:
 - **The save bar is sticky.** The form is long; scrolling back to the bottom
   after every edit is the friction that stops a catalogue from being kept
   current.
+- **Photos come first in the form.** The shop adds pieces from a phone standing
+  next to the rail: the photo is both the first thing they have and the one
+  field that gates saving. Asking for a name above it asks them to describe
+  something they have not looked at yet.
+- **Categories are created in the form, not in the code.** `ProductCategory` is
+  free text, capped at `CATEGORY_MAX_LENGTH`. The `<select>` lists the sections
+  already in use and ends in "+ Criar nova categoria…", which swaps it for a
+  text input. A select rather than a free field with autocomplete, because
+  reusing an existing section has to be the easiest path — "Feminino" and
+  "feminino " typed by hand are two sections on the site and nothing warns
+  anyone. The list is **derived from the catalogue** (`categoriesOf`), so a
+  section appears with its first piece and disappears with its last; there is
+  no second list to fall out of step. `DEFAULT_CATEGORIES` is only a preferred
+  order — the four the shop opened with sort first, everything else follows
+  alphabetically.
 - **Rows stack** below `sm`: thumbnail and name on one line, actions wrapping
   underneath, instead of five controls squeezed into a row.
 - **Search and category chips** sit above the list. Forty pieces is a lot of

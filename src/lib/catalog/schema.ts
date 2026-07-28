@@ -8,7 +8,7 @@
 
 import { z } from "zod";
 
-import { PRODUCT_CATEGORIES } from "@/types/catalog";
+import { CATEGORY_MAX_LENGTH } from "@/types/catalog";
 
 const colorSchema = z.object({
   name: z.string().trim().min(1, "Dê um nome à cor.").max(40),
@@ -34,7 +34,17 @@ const fields = {
     .number({ message: "Informe um preço." })
     .nonnegative("O preço não pode ser negativo.")
     .max(1_000_000),
-  category: z.enum(PRODUCT_CATEGORIES),
+  /**
+   * Free text since the shop creates its own sections. Trimmed and capped —
+   * an unbounded category is a filter chip the width of the screen, and the
+   * list of sections is derived from these values, so a stray space would
+   * silently split one section into two.
+   */
+  category: z
+    .string()
+    .trim()
+    .min(1, "Escolha ou escreva uma categoria.")
+    .max(CATEGORY_MAX_LENGTH),
   sizes: z.array(z.string().trim().min(1).max(12)).max(40),
   colors: z.array(colorSchema).max(40),
   /** The gallery. First entry is the cover, so order is meaningful. */

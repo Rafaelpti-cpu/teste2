@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createProduct, updateProduct } from "@/lib/admin/client";
-import { PRODUCT_CATEGORIES } from "@/types/catalog";
-import type { Product, ProductCategory, ProductInput } from "@/types/catalog";
+import { DEFAULT_CATEGORIES } from "@/types/catalog";
+import type { Product, ProductInput } from "@/types/catalog";
 
+import { CategoryField } from "./category-field";
 import { ColorEditor } from "./color-editor";
 import { ImagePicker } from "./image-picker";
 import { SizeEditor } from "./size-editor";
@@ -14,6 +15,8 @@ import { SizeEditor } from "./size-editor";
 export interface ProductFormProps {
   /** Absent when creating. */
   product?: Product;
+  /** Sections already in use, offered before inventing a new one. */
+  categories: string[];
 }
 
 const EMPTY: ProductInput = {
@@ -30,9 +33,11 @@ const EMPTY: ProductInput = {
 const field =
   "w-full rounded-control border border-border-subtle bg-surface-raised px-3 py-2 text-sm outline-none focus-visible:border-action-primary";
 
-export const ProductForm = ({ product }: ProductFormProps) => {
+export const ProductForm = ({ product, categories }: ProductFormProps) => {
   const router = useRouter();
-  const [draft, setDraft] = useState<ProductInput>(product ?? EMPTY);
+  const [draft, setDraft] = useState<ProductInput>(
+    product ?? { ...EMPTY, category: categories[0] ?? DEFAULT_CATEGORIES[0] },
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +65,15 @@ export const ProductForm = ({ product }: ProductFormProps) => {
 
   return (
     <form onSubmit={submit} className="flex max-w-[46rem] flex-col gap-7">
+      {/*
+        Photos first, because that is where the work actually starts: the shop
+        adds pieces from a phone, standing next to the rail, and the photo is
+        both the first thing they have and the one field that gates saving.
+        Asking for a name before the picture is asking them to describe
+        something they have not looked at yet.
+      */}
+      <ImagePicker value={draft.images} onChange={(images) => set("images", images)} />
+
       <div className="flex flex-col gap-2">
         <label htmlFor="name" className="text-sm font-medium text-foreground">
           Nome da peça
@@ -112,24 +126,15 @@ export const ProductForm = ({ product }: ProductFormProps) => {
           <label htmlFor="category" className="text-sm font-medium text-foreground">
             Categoria
           </label>
-          <select
-            id="category"
+          <CategoryField
             value={draft.category}
-            onChange={(event) =>
-              set("category", event.target.value as ProductCategory)
-            }
+            onChange={(category) => set("category", category)}
+            options={categories}
             className={field}
-          >
-            {PRODUCT_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
-      <ImagePicker value={draft.images} onChange={(images) => set("images", images)} />
       <SizeEditor value={draft.sizes} onChange={(sizes) => set("sizes", sizes)} />
       <ColorEditor value={draft.colors} onChange={(colors) => set("colors", colors)} />
 

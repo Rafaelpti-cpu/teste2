@@ -3,7 +3,7 @@
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { RevealHeading } from "@/components/ui/reveal-heading";
 import { ButtonLink } from "@/components/ui/button-link";
-import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/types/catalog";
+import { categoriesOf, type Product, type ProductCategory } from "@/types/catalog";
 
 import { useEffect, useState } from "react";
 
@@ -51,7 +51,7 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
     counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
   }
 
-  const available = PRODUCT_CATEGORIES.filter((category) => counts.has(category));
+  const available = categoriesOf(products);
   const matching = active
     ? products.filter((product) => product.category === active)
     : products;

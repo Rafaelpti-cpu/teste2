@@ -10,6 +10,19 @@ This is a human-curated log — not a mirror of `git log`.
 
 ## 2026-07-28
 
+- **The shop can create its own categories.** `ProductCategory` was a union of
+  four strings validated with `z.enum`; adding a section needed a developer and
+  a deploy, which rather defeats having an admin. It is now free text capped at
+  40 characters, the sections shown anywhere are **derived from the catalogue**
+  (`categoriesOf`), and `DEFAULT_CATEGORIES` survives only as the preferred
+  order — the original four sort first, new ones follow alphabetically. The
+  form's `<select>` ends in "+ Criar nova categoria…". See [[admin-area]].
+- **Photos moved to the top of the product form** — that is where the work
+  actually starts when a piece is added from a phone next to the rail, and it
+  is the one field that gates saving.
+- **The metrics screen became a chart** instead of a list of thirty days: two
+  small SVG bar charts sharing a timeline, and pieces as a ranked list with a
+  per-piece conversion rate. See [[analytics]].
 - **The site is live on its own domain.** `renovacloset.com` moved off Lovable
   (DNS at Wix: apex `A` → Vercel, `www` `CNAME`, `www` redirecting 308 to the
   apex). `NEXT_PUBLIC_SITE_URL` follows, so the link inside the WhatsApp message
