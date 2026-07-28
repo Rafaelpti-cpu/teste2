@@ -50,3 +50,24 @@ create table if not exists public.admin_users (
 );
 
 alter table public.admin_users enable row level security;
+
+-- What happened on the site: one row per page view and per WhatsApp click.
+--
+-- Deliberately holds nothing personal — no IP, no user agent, no cookie. The
+-- `visitor` column is a random id kept in `sessionStorage`, which the browser
+-- discards when the tab closes: it separates "three pages in one visit" from
+-- "three visits", and identifies nobody. See obsidian/backend/analytics.md.
+create table if not exists public.site_events (
+  id           uuid primary key default gen_random_uuid(),
+  type         text        not null check (type in ('view', 'whatsapp')),
+  path         text        not null,
+  product_slug text,
+  visitor      text        not null,
+  created_at   timestamptz not null default now()
+);
+
+-- The admin always reads a time window, newest first, and groups in memory.
+create index if not exists site_events_created_at_idx
+  on public.site_events (created_at desc);
+
+alter table public.site_events enable row level security;

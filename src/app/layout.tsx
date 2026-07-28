@@ -7,6 +7,7 @@ import {
 } from "@/utils/seo/generate-page-metadata";
 import { getSiteStructuredData } from "@/utils/seo/structured-data";
 
+import { PageBeacon } from "@/components/analytics/page-beacon";
 import { LazyCookie } from "@/components/common/Cookie";
 import { AdaptiveGrid } from "@/components/common/grid";
 import { ReducedMotion } from "@/components/common/reduced-motion";
@@ -58,6 +59,7 @@ export default function RootLayout({
           <AdaptiveGrid />
           <ReducedMotion />
           <LazyCookie />
+          <PageBeacon />
           {children}
         </ScrollLayout>
       </body>

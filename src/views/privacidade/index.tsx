@@ -34,6 +34,14 @@ const SECTIONS = [
     ],
   },
   {
+    title: "Contagem de acessos",
+    body: [
+      "Registramos quais páginas e quais peças foram abertas, e quando alguém toca no botão do WhatsApp. Usamos isso só para saber o que está fazendo falta na loja.",
+      "Não guardamos nada que identifique você: sem nome, sem e-mail, sem endereço de IP, sem localização e sem informação do aparelho. Também não usamos cookie para isso.",
+      "Para não contar a mesma visita várias vezes, o site guarda um número sorteado na memória temporária da aba. Ele não diz nada sobre você e o próprio navegador o apaga quando a aba é fechada — se você voltar amanhã, será uma visita nova e sem ligação com a de hoje.",
+    ],
+  },
+  {
     title: "Cookies",
     body: [
       "Cookies necessários mantêm o site funcionando e guardam a sua própria escolha sobre cookies. Eles não podem ser desligados.",

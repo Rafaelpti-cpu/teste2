@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import type { CatalogBackend } from "@/lib/catalog/store";
 
-export type AdminTab = "produtos" | "textos" | "acessos";
+export type AdminTab = "produtos" | "textos" | "medicoes" | "acessos";
 
 export interface AdminShellProps {
   title: string;
@@ -23,6 +23,7 @@ const BACKEND_LABEL: Record<CatalogBackend, string> = {
 const TABS: { id: AdminTab; label: string; href: string }[] = [
   { id: "produtos", label: "Produtos", href: "/admin" },
   { id: "textos", label: "Textos do site", href: "/admin/textos" },
+  { id: "medicoes", label: "Medições", href: "/admin/medicoes" },
   { id: "acessos", label: "Acessos", href: "/admin/acessos" },
 ];
 

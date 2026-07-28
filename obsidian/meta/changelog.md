@@ -8,6 +8,25 @@ updated: 2026-07-27
 Chronological log of notable changes to the project. Newest first.
 This is a human-curated log — not a mirror of `git log`.
 
+## 2026-07-28
+
+- **The site is live on its own domain.** `renovacloset.com` moved off Lovable
+  (DNS at Wix: apex `A` → Vercel, `www` `CNAME`, `www` redirecting 308 to the
+  apex). `NEXT_PUBLIC_SITE_URL` follows, so the link inside the WhatsApp message
+  finally carries the shop's own address. See [[deploy]].
+- **"Medições" tab in the admin** — visits, page views, WhatsApp clicks, the
+  conversion rate between them, a per-day bar list and a table of pieces ranked
+  by clicks. First-party, anonymous, no cookie, no chart library. ADR-0027 and
+  [[analytics]]. **Requires re-running `supabase/schema.sql`** for the new
+  `site_events` table.
+- **The buy button got smaller by saying less.** WhatsApp green plus the mark,
+  so the label could drop from "Quero esta peça — falar no WhatsApp" (two lines
+  on a phone) to "Quero esta peça". 75px → 54px tall. Its label is ink, not
+  white: white on `#25d366` measures 1.98:1 and fails WCAG AA.
+- **The hero tag was being drawn at a third of the screen's resolution** on
+  phones — mobile clamped `pixelRatio` to 1.0, which is the right advice for a
+  full-screen scene and wrong for a 250×312 canvas. Now 2.0 with antialiasing.
+
 ## 2026-07-27
 
 Three reports from the shop, all from a phone opening the published site.

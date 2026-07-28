@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 
 import { useCookieStore } from "@/components/common/Cookie";
+import { track } from "@/lib/analytics/client";
 import { useLoop } from "@/hooks/animation/use-render-loop";
 import { prefersReducedMotion } from "@/lib/scene/device";
 
@@ -60,6 +61,7 @@ export const WhatsAppFab = ({
       target="_blank"
       rel="noopener"
       aria-label={label}
+      onClick={() => track("whatsapp", window.location.pathname)}
       className="group fixed right-4 bottom-4 z-40 flex size-14 items-center justify-center rounded-pill bg-action-whatsapp text-action-whatsapp-foreground shadow-[0_0.75rem_2rem_-0.5rem_rgba(0,0,0,0.45)] transition-transform duration-[var(--duration-normal)] ease-entrance hover:scale-105 focus-visible:scale-105 sm:right-8 sm:bottom-8 sm:size-16"
     >
       {/* The halo. Decorative, and skipped entirely under reduced motion. */}

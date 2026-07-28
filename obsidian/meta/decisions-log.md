@@ -10,6 +10,51 @@ consequences. Use [[templates/adr-note]] for new entries. Newest first.
 
 ---
 
+## ADR-0027 — Analytics are first-party, anonymous, and measure the WhatsApp click
+
+- **Status:** Accepted
+- **Date:** 2026-07-28
+
+**Context.** The shop asked to see how many people visit and which pieces get
+looked at, *inside the admin* rather than in another company's dashboard. Vercel
+Web Analytics would have been one line of code, but it lives in Vercel's UI, and
+on the Hobby plan its custom events are limited — so the number that actually
+decides what to reorder would have been the one missing.
+
+**Decision.** A first-party `site_events` table with two event types: `view` and
+`whatsapp`. Same two-backing shape as the catalogue (ADR-0022), the same plain
+`fetch` against PostgREST, no new dependency and no chart library — the bars are
+divs sized by percentage.
+
+The conversion metric is the point. Views alone rank pieces by photograph;
+views against WhatsApp clicks rank them by whether the photograph told the
+truth.
+
+**Nothing personal is stored** — no IP, no user agent, no location, no cookie.
+The only identifier is a random UUID in `sessionStorage`, discarded when the tab
+closes, which separates page views from visits and identifies nobody. That is
+what keeps this outside the consent banner and honest in the privacy policy.
+
+Recording happens in the browser, not in the server render: crawlers do not run
+JavaScript, so they are filtered without maintaining a bot list, and no customer
+ever waits on a database write. `sendBeacon` is preferred because the WhatsApp
+click tears the page down mid-request.
+
+**Consequences.** The shop gets the number that answers "what should I buy more
+of" without a third party, a cookie, or a consent prompt.
+
+The cost is a known ceiling: the summary groups in memory, capped at 20 000 rows
+per window, and says so on screen (`truncated`) rather than under-reporting
+silently. The upgrade path — grouping in a Postgres view — is written up in
+[[analytics]] along with the fact that nothing prunes old rows yet. Both are
+fine at a local shop's traffic and neither should be done before the banner
+appears.
+
+Also accepted: `/admin` is excluded from measurement, because otherwise the
+person reading the numbers is the person generating them.
+
+---
+
 ## ADR-0026 — The site ships one appearance, and says so to the browser
 
 - **Status:** Accepted

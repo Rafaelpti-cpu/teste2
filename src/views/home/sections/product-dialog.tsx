@@ -7,6 +7,7 @@ import { ProductDetails } from "@/components/ui/product-details";
 import { ProductGallery } from "@/components/ui/product-gallery";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 import { whatsappProductHref } from "@/data/home";
+import { track } from "@/lib/analytics/client";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import type { Product } from "@/types/catalog";
 
@@ -36,6 +37,10 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
 
     if (product && !dialog.open) {
       dialog.showModal();
+      // Most customers browse the grid and never load `/produto/<slug>`, so
+      // without this the dialog — the main way a piece is actually looked at —
+      // would be invisible in the metrics.
+      track("view", `/produto/${product.slug}`, product.slug);
       // Lock the page behind it through Lenis, not `body { overflow }` —
       // the smooth-scroll layer owns scrolling here.
       stopScroll();
@@ -106,7 +111,10 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
           </div>
 
           <div className="flex flex-col gap-2 border-t border-border-subtle bg-background p-4 md:px-8 md:pb-8">
-            <WhatsAppButton href={whatsappProductHref(product)}>
+            <WhatsAppButton
+              href={whatsappProductHref(product)}
+              productSlug={product.slug}
+            >
               Quero esta peça
             </WhatsAppButton>
             <p className="text-center text-xs text-foreground-muted">

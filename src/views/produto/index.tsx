@@ -89,7 +89,10 @@ export const ProductView = async ({ slug }: ProductViewProps) => {
             <ProductDetails product={product} tag="h1" />
 
             <div className="flex flex-col items-start gap-3">
-              <WhatsAppButton href={whatsappProductHref(product)}>
+              <WhatsAppButton
+                href={whatsappProductHref(product)}
+                productSlug={product.slug}
+              >
                 Quero esta peça
               </WhatsAppButton>
               <p className="text-xs text-foreground-muted">
