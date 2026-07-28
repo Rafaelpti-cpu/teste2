@@ -36,8 +36,8 @@ section to what the code actually does:
 | 4 | Render only when visible | `IntersectionObserver` (`rootMargin: 20%`) + `document.hidden`, both feeding `syncLoop()` |
 | 4 | One shared rAF | `subscribeToTicker` — no second loop |
 | 5 | Frame budget per tier | 30 fps mobile / 45 tablet / uncapped desktop |
-| 6 | Clamp pixel ratio | 1.0 / 1.25 / 1.5 — clamped to 1.0 (not below) on mobile because the printed text has hard edges |
-| 7 | Cut fill | 4 meshes, no post-processing, no shadow maps, `antialias: false` on mobile, `stencil: false` |
+| 6 | Clamp pixel ratio | 2.0 / 1.5 / 1.5 — see the note below on why mobile is the *highest* of the three |
+| 7 | Cut fill | 4 meshes, no post-processing, no shadow maps, `stencil: false`; `antialias` on every tier |
 | 8 | As few lights as the look survives | One `DirectionalLight` + a PMREM'd `RoomEnvironment`; `AmbientLight` for lift. No light is added or removed at runtime |
 | 9 | No per-frame allocation | The loop mutates three rotations and calls `render()`; no `Vector3`/`Matrix4` is constructed in it |
 | 11 | No cursor on touch | `budget.pointer` is `false` below desktop — the listener is never attached |
@@ -58,6 +58,19 @@ corner sits at ~1.53 units against a half-width of ~1.9; that ~20 % is the whole
 margin. Moving the camera any closer, widening the swing, or lengthening the
 cord all spend the same budget. The loop also hard-stops the angle at
 `MAX_SWING` and bounces it back, so no pointer flick can push it out of frame.
+
+**Mobile has the highest pixel-ratio clamp, not the lowest.** This looks wrong
+against every optimisation guide, and the guides are right — *for a scene that
+fills the viewport*. This one is ~250×312 CSS px. Clamping it to 1.0 meant
+drawing 78k pixels and then letting the browser stretch them across a 3× phone
+screen: the tag was rendered at a third of the resolution of the text beside it,
+and the shop reported it as broken on a phone while calling the desktop version
+perfect. At 2.0 it is 312k pixels — 10 % of a full-screen render on a 3× handset,
+four meshes, no post-processing, capped at 30 fps.
+
+The lesson generalises: a per-tier budget is meaningless without the canvas size
+it applies to. If this scene ever grows to fill the hero on a phone, this clamp
+has to come back down.
 
 **The lighting is deliberately under 1.0 total** (key 1.15 + ambient 0.35 +
 environment 0.4). Cream paper under a strong key clips to pure white and takes

@@ -67,16 +67,30 @@ export const sceneShouldFreeze = (tier: DeviceTier) =>
   prefersReducedMotion() || (tier === "mobile" && isEnergySaver());
 
 const BUDGETS: Record<DeviceTier, Omit<SceneBudget, "tier" | "pixelRatio">> = {
-  // The tag has hard edges (text, a printed rule), so mobile clamps to 1.0
-  // rather than below it — anything lower aliases visibly.
-  mobile: { frameBudget: 1000 / 30 - 1, antialias: false, pointer: false },
+  // Mobile gets antialiasing too. The generic advice to drop it assumes a
+  // full-screen scene; this canvas is ~250x312 CSS px, and MSAA on a target
+  // that small is far cheaper than the die-cut silhouette and the 0.012-radius
+  // cord look bad. The 30 fps cap is what pays for it.
+  mobile: { frameBudget: 1000 / 30 - 1, antialias: true, pointer: false },
   tablet: { frameBudget: 1000 / 45 - 1, antialias: true, pointer: false },
   desktop: { frameBudget: 0, antialias: true, pointer: true },
 };
 
+/**
+ * Clamped device pixel ratio per tier.
+ *
+ * Mobile allows 2, not 1. The 1.0 clamp is the standard guidance for a scene
+ * that fills the viewport — here it meant a ~250x312 canvas drawn at 250x312
+ * physical pixels and then stretched across a 3x phone screen, so the tag was
+ * rendered at a third of the resolution of the text beside it and read as a
+ * blur. At 2 the same canvas is 500x624 = ~312k pixels for four meshes with no
+ * post-processing and no shadow maps, which is a fraction of a full-screen
+ * phone render. See obsidian/frontend/hero-scene.md — still unprofiled on a
+ * real handset, so this is the first number to walk back if a phone stutters.
+ */
 const PIXEL_RATIO: Record<DeviceTier, [min: number, max: number]> = {
-  mobile: [0.75, 1],
-  tablet: [0.75, 1.25],
+  mobile: [0.75, 2],
+  tablet: [0.75, 1.5],
   desktop: [0.75, 1.5],
 };
 

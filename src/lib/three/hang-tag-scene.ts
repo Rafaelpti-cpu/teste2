@@ -227,7 +227,10 @@ export class HangTagScene {
       drawTagFace({ colors, fontFamily, mark }),
     );
     faceTexture.colorSpace = SRGBColorSpace;
-    faceTexture.anisotropy = this.budget.tier === "mobile" ? 1 : 8;
+    // 4 rather than 1 on mobile: the tag turns on its own axis, so the printed
+    // face is off-perpendicular most of the time and anisotropy 1 smears the
+    // small type exactly when it is being looked at.
+    faceTexture.anisotropy = this.budget.tier === "mobile" ? 4 : 8;
     const faceGeometry = new PlaneGeometry(TAG_WIDTH, TAG_HEIGHT);
     const faceMaterial = new MeshStandardMaterial({
       map: faceTexture,
