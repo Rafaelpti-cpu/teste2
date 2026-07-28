@@ -10,6 +10,13 @@ This is a human-curated log — not a mirror of `git log`.
 
 ## 2026-07-28
 
+- **"Espaço" tab in the admin** — how much photo storage is used, how many more
+  photos fit, which pieces weigh most, and a sweep for **orphan photos**.
+  Deleting a piece leaves its photos in the bucket and replacing one abandons
+  the old file, so a bucket grows silently; the tab makes that visible and
+  recoverable on a button. The gauge itself sits in the admin chrome on every
+  page, and the upload endpoint refuses a file that would cross the limit
+  (507). See [[catalog-store]].
 - **The shop can create its own categories.** `ProductCategory` was a union of
   four strings validated with `z.enum`; adding a section needed a developer and
   a deploy, which rather defeats having an admin. It is now free text capped at

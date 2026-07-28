@@ -5,7 +5,7 @@ import type { StorageUsage } from "@/lib/catalog/storage";
 
 import { StorageMeter } from "./storage-meter";
 
-export type AdminTab = "produtos" | "textos" | "medicoes" | "acessos";
+export type AdminTab = "produtos" | "textos" | "medicoes" | "espaco" | "acessos";
 
 export interface AdminShellProps {
   title: string;
@@ -29,6 +29,7 @@ const TABS: { id: AdminTab; label: string; href: string }[] = [
   { id: "produtos", label: "Produtos", href: "/admin" },
   { id: "textos", label: "Textos do site", href: "/admin/textos" },
   { id: "medicoes", label: "Medições", href: "/admin/medicoes" },
+  { id: "espaco", label: "Espaço", href: "/admin/espaco" },
   { id: "acessos", label: "Acessos", href: "/admin/acessos" },
 ];
 

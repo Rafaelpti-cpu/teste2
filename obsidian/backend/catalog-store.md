@@ -84,6 +84,40 @@ Two things use it:
 The reading is cached for 60 s and invalidated after each upload, so the gauge
 moves immediately without listing the bucket on every page load.
 
+> [!warning] That cache is per-bundle, and invalidation does not cross chunks
+> It is a module variable, and Next bundles route handlers and pages into
+> separate server chunks — each gets its own copy. `invalidateStorageUsage()`
+> after the orphan sweep clears the route handler's and leaves the page's
+> untouched. The page then rendered "no orphans left" above a gauge still
+> claiming the old total, which is exactly the kind of wrong that erodes trust
+> in a number.
+>
+> `getStorageReport()` therefore derives usage from **its own** listing rather
+> than calling `getStorageUsage()`, and the Espaço view passes that down to the
+> shell instead of asking again. **Anything that shows two of these numbers must
+> read them from one listing.** Caught by testing the sweep end to end against a
+> stub; a unit test of either half would have passed.
+
+## Orphan photos
+
+Deleting a piece removes its row and **leaves its photos in the bucket**, and
+replacing a photo in the form abandons the old file. A bucket therefore grows
+quietly, and the only evidence is the gauge creeping up.
+
+The "Espaço" tab lists what is loose, how much it weighs, and sweeps it on a
+button. `getStorageReport()` computes the orphan set by diffing the bucket
+against every `images` entry across the catalogue; `objectNameOf()` maps a
+public URL back to an object name and returns `null` for the seeded photos that
+live in `public/`, which cost the bucket nothing.
+
+The sweep is **manual and visible**, not something `remove()` does on the way
+past. A file is an orphan only relative to the catalogue *as read right now* —
+if that read ever came back short, deleting on its basis would destroy photos
+still in use. A button the shop presses, showing what will go, cannot be
+triggered by a bad read at three in the morning. `DELETE /api/admin/espaco`
+recomputes the set server-side rather than trusting the list the browser was
+shown, so a photo added between render and click is never caught in it.
+
 Uploads are stored **as they arrive** — a phone photo is 3–4 MB, so the ceiling
 is roughly 285 photos. Nothing resizes before upload yet; that is the obvious
 next lever, and it would also fix the slow upload over mobile data in the shop.

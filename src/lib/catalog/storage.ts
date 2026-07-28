@@ -41,6 +41,88 @@ interface StorageObject {
   metadata: { size?: number } | null;
 }
 
+/** One file in the bucket. */
+export interface StoredFile {
+  name: string;
+  bytes: number;
+}
+
+/** Walks the whole bucket. Flat by construction — `saveImage` writes no folders. */
+const listAll = async (): Promise<StoredFile[]> => {
+  const config = getSupabaseConfig();
+  if (!config) return [];
+
+  const files: StoredFile[] = [];
+  let offset = 0;
+
+  for (;;) {
+    const response = await fetch(
+      `${config.url}/storage/v1/object/list/${config.bucket}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: config.serviceKey,
+          authorization: `Bearer ${config.serviceKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ prefix: "", limit: PAGE, offset }),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) throw new Error(`Storage ${response.status}`);
+
+    const page = (await response.json()) as StorageObject[];
+    for (const object of page) {
+      // Folder placeholders come back with no metadata; they weigh nothing.
+      if (!object.metadata) continue;
+      files.push({ name: object.name, bytes: object.metadata.size ?? 0 });
+    }
+
+    if (page.length < PAGE) break;
+    offset += PAGE;
+  }
+
+  return files;
+};
+
+/** Deletes files by name. Returns how many the bucket says it removed. */
+export const deleteStorageObjects = async (
+  names: string[],
+): Promise<number> => {
+  const config = getSupabaseConfig();
+  if (!config || names.length === 0) return 0;
+
+  const response = await fetch(
+    `${config.url}/storage/v1/object/${config.bucket}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: config.serviceKey,
+        authorization: `Bearer ${config.serviceKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ prefixes: names }),
+    },
+  );
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Storage delete ${response.status}: ${detail}`);
+  }
+
+  const removed = (await response.json()) as unknown[];
+  invalidateStorageUsage();
+  return Array.isArray(removed) ? removed.length : names.length;
+};
+
+/** The object name inside the bucket, or `null` for anything not stored there. */
+export const objectNameOf = (imageUrl: string): string | null => {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+  const prefix = `${config.url}/storage/v1/object/public/${config.bucket}/`;
+  if (!imageUrl.startsWith(prefix)) return null;
+  return decodeURIComponent(imageUrl.slice(prefix.length));
+};
+
 export const getStorageLimitBytes = (): number => {
   const configured = Number(process.env.SUPABASE_STORAGE_LIMIT_MB);
   const megabytes =
@@ -56,37 +138,9 @@ export const getStorageUsage = async (): Promise<StorageUsage | null> => {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.value;
 
   try {
-    let usedBytes = 0;
-    let files = 0;
-    let offset = 0;
-
-    for (;;) {
-      const response = await fetch(
-        `${config.url}/storage/v1/object/list/${config.bucket}`,
-        {
-          method: "POST",
-          headers: {
-            apikey: config.serviceKey,
-            authorization: `Bearer ${config.serviceKey}`,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ prefix: "", limit: PAGE, offset }),
-          cache: "no-store",
-        },
-      );
-      if (!response.ok) throw new Error(`Storage ${response.status}`);
-
-      const page = (await response.json()) as StorageObject[];
-      for (const object of page) {
-        // Folder placeholders come back with no metadata; they weigh nothing.
-        if (!object.metadata) continue;
-        usedBytes += object.metadata.size ?? 0;
-        files += 1;
-      }
-
-      if (page.length < PAGE) break;
-      offset += PAGE;
-    }
+    const all = await listAll();
+    const usedBytes = all.reduce((sum, file) => sum + file.bytes, 0);
+    const files = all.length;
 
     const limitBytes = getStorageLimitBytes();
     const value: StorageUsage = {
@@ -108,4 +162,101 @@ export const getStorageUsage = async (): Promise<StorageUsage | null> => {
 /** Called after a successful upload, so the gauge moves immediately. */
 export const invalidateStorageUsage = () => {
   cache = null;
+};
+
+/** How much space one piece's photos take. */
+export interface ProductUsage {
+  id: string;
+  name: string;
+  bytes: number;
+  photos: number;
+}
+
+export interface StorageReport {
+  usage: StorageUsage;
+  /** Heaviest first — the ones worth looking at when space runs low. */
+  products: ProductUsage[];
+  /** Files in the bucket that no piece points at. Pure waste. */
+  orphans: StoredFile[];
+  orphanBytes: number;
+}
+
+/**
+ * The full picture, for the "Espaço" tab.
+ *
+ * Orphans are the interesting half. Deleting a piece removes its row and leaves
+ * its photos in the bucket, and replacing a photo in the form abandons the old
+ * one — so a bucket grows quietly, and the only evidence is a number going up.
+ *
+ * Sweeping them is deliberately a **manual, visible action** rather than
+ * something `remove()` does on the way past. A file is an orphan only relative
+ * to the catalogue as it is *right now*; if a read of the products table ever
+ * came back short, deleting on that basis would destroy photos that are still
+ * in use. A button the shop presses, showing exactly what will go, cannot be
+ * triggered by a bad read at three in the morning.
+ *
+ * 📖 Docs: obsidian/backend/catalog-store.md
+ */
+export const getStorageReport = async (
+  products: { id: string; name: string; images: string[] }[],
+): Promise<StorageReport | null> => {
+  if (!getSupabaseConfig()) return null;
+
+  try {
+    /*
+      One listing, and the usage is derived from it rather than read from
+      `getStorageUsage()`.
+
+      That is not a micro-optimisation, it is correctness. The cache is a module
+      variable, and Next bundles the route handler and the page into separate
+      server chunks — each gets its own copy, so `invalidateStorageUsage()`
+      after a sweep clears one and leaves the other. The page then rendered
+      "no orphans left" above a gauge still claiming the old total. Anything
+      that reads both numbers has to read them from the same listing.
+    */
+    const files = await listAll();
+    const limitBytes = getStorageLimitBytes();
+    const usedBytes = files.reduce((sum, file) => sum + file.bytes, 0);
+    const usage: StorageUsage = {
+      usedBytes,
+      limitBytes,
+      files: files.length,
+      percent: Math.min(100, Math.round((usedBytes / limitBytes) * 100)),
+    };
+    // This chunk's cache is fresh now; hand it the truth on the way past.
+    cache = { at: Date.now(), value: usage };
+
+    const sizes = new Map(files.map((file) => [file.name, file.bytes]));
+
+    const used = new Set<string>();
+    const perProduct: ProductUsage[] = [];
+
+    for (const product of products) {
+      let bytes = 0;
+      let photos = 0;
+      for (const image of product.images) {
+        const name = objectNameOf(image);
+        // Seeded photos live in `public/` and cost the bucket nothing.
+        if (!name) continue;
+        used.add(name);
+        bytes += sizes.get(name) ?? 0;
+        photos += 1;
+      }
+      if (photos > 0) {
+        perProduct.push({ id: product.id, name: product.name, bytes, photos });
+      }
+    }
+
+    const orphans = files.filter((file) => !used.has(file.name));
+
+    return {
+      usage,
+      products: perProduct.sort((a, b) => b.bytes - a.bytes),
+      orphans,
+      orphanBytes: orphans.reduce((sum, file) => sum + file.bytes, 0),
+    };
+  } catch (error) {
+    console.error("[catalog/storage] report unavailable:", error);
+    return null;
+  }
 };
