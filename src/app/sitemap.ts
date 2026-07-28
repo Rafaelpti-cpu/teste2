@@ -28,15 +28,28 @@ import { siteConfig } from "@/lib/site";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await getCatalogStore().list();
+  const home = {
+    url: siteConfig.url,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 1,
+  };
+
+  // This runs during the build, so it reaches Supabase over the network from
+  // Vercel's builder. A throw here does not degrade the sitemap — it fails the
+  // whole deployment, taking the storefront down with it over a file that only
+  // search crawlers read. Never worth it: on failure the sitemap lists the home
+  // page and the next revalidation picks the catalogue back up.
+  let products: Awaited<ReturnType<ReturnType<typeof getCatalogStore>["list"]>>;
+  try {
+    products = await getCatalogStore().list();
+  } catch (error) {
+    console.error("[sitemap] catalogue unavailable, listing home only:", error);
+    return [home];
+  }
 
   return [
-    {
-      url: siteConfig.url,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
+    home,
     ...products
       .filter((product) => product.active)
       .map((product) => ({
