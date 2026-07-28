@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { ProductDetails } from "@/components/ui/product-details";
 import { ProductGallery } from "@/components/ui/product-gallery";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 import { whatsappProductHref } from "@/data/home";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import type { Product } from "@/types/catalog";
@@ -105,14 +106,9 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
           </div>
 
           <div className="flex flex-col gap-2 border-t border-border-subtle bg-background p-4 md:px-8 md:pb-8">
-            <a
-              href={whatsappProductHref(product)}
-              target="_blank"
-              rel="noopener"
-              className="inline-flex items-center justify-center rounded-pill bg-action-primary px-6 py-4 text-sm font-medium text-action-primary-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-action-primary-hover"
-            >
-              Quero esta peça — falar no WhatsApp
-            </a>
+            <WhatsAppButton href={whatsappProductHref(product)}>
+              Quero esta peça
+            </WhatsAppButton>
             <p className="text-center text-xs text-foreground-muted">
               A mensagem já vai com a foto e o nome da peça.
             </p>

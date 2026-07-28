@@ -34,8 +34,10 @@
   --raw-color-ink-900: #181413;
 
   /* WhatsApp's own brand green — a third party's colour, so it is a literal
-     here and never derived from the palette. */
+     here and never derived from the palette. The darker one is their own
+     pressed/secondary green, for the same reason. */
   --raw-color-whatsapp: #25d366;
+  --raw-color-whatsapp-dark: #1da851;
 
   --raw-duration-fast: 150ms;
   --raw-duration-normal: 250ms;
@@ -81,6 +83,7 @@
   --action-primary-hover: var(--raw-color-rose-600);
   --action-primary-foreground: var(--raw-color-ink-900);
   --action-whatsapp: var(--raw-color-whatsapp);
+  --action-whatsapp-hover: var(--raw-color-whatsapp-dark);
   --action-whatsapp-foreground: var(--raw-color-white);
 
   /* Lines & decoration. */
@@ -133,6 +136,7 @@
   --color-action-primary-hover: var(--action-primary-hover);
   --color-action-primary-foreground: var(--action-primary-foreground);
   --color-action-whatsapp: var(--action-whatsapp);
+  --color-action-whatsapp-hover: var(--action-whatsapp-hover);
   --color-action-whatsapp-foreground: var(--action-whatsapp-foreground);
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);

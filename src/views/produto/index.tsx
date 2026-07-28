@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 import { coverImage } from "@/types/catalog";
 import { ProductDetails } from "@/components/ui/product-details";
 import { ProductGallery } from "@/components/ui/product-gallery";
-import { ButtonLink } from "@/components/ui/button-link";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 import { whatsappProductHref } from "@/data/home";
 import { readSiteContent } from "@/lib/content";
 import { getCatalogStore } from "@/lib/catalog";
@@ -88,10 +88,10 @@ export const ProductView = async ({ slug }: ProductViewProps) => {
           <div className="flex flex-col gap-7">
             <ProductDetails product={product} tag="h1" />
 
-            <div className="flex flex-col gap-3">
-              <ButtonLink href={whatsappProductHref(product)}>
-                Quero esta peça — falar no WhatsApp
-              </ButtonLink>
+            <div className="flex flex-col items-start gap-3">
+              <WhatsAppButton href={whatsappProductHref(product)}>
+                Quero esta peça
+              </WhatsAppButton>
               <p className="text-xs text-foreground-muted">
                 A mensagem já vai com a foto e o nome da peça.
               </p>

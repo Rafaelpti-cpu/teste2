@@ -22,6 +22,29 @@ A link that looks like a button. Server Component.
 > A button that *does* something on the page is a `<button>`, not this. See
 > [[html-semantics]].
 
+## `<WhatsAppButton>` — `whatsapp-button.tsx`
+
+The buy action, used by the product dialog and `/produto/[slug]`. Server
+Component. Takes a `wa.me` href (build it with `whatsappProductHref`) and a
+short label.
+
+WhatsApp green plus the mark rather than the site's rose. The label used to read
+"Quero esta peça — falar no WhatsApp", which wrapped to two lines on a phone and
+read as a sentence; naming the destination is the icon's and the colour's job, so
+the words got to shrink to "Quero esta peça".
+
+> [!warning] The label is `text-foreground`, not `action-whatsapp-foreground`
+> White on `#25d366` measures **1.98:1** — WhatsApp's own buttons look like that,
+> and it fails WCAG AA for text by a mile. Ink on the same green is **9.22:1**.
+> The FAB keeps the white mark: an icon trades on recognition and has no words to
+> read. Do not "fix" this back to white for consistency.
+
+## `<WhatsAppGlyph>` — `whatsapp-glyph.tsx`
+
+The WhatsApp mark as a `currentColor` path, always `aria-hidden` — the control
+around it carries the name. Sizing is the caller's. Shared by `<WhatsAppButton>`
+and `<WhatsAppFab>` so the two paths cannot drift.
+
 ## `<Eyebrow>` — `eyebrow.tsx`
 
 Small tracked label that opens a section, prefixed by a decorative brand dot
