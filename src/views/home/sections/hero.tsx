@@ -65,7 +65,15 @@ export const Hero = ({ content, withScene }: HeroProps) => (
         </dl>
       </div>
 
-      <div className="flex justify-center lg:justify-end">
+      {/*
+        On a phone the tag hangs against a dark plinth. It is a white printed
+        card: on the cream page at 250px it read as a pale smudge, and the
+        contrast is what makes it look like an object instead of an artefact.
+        The plinth is phone-only — from `sm` up the canvas is large enough that
+        the tag carries itself, and a dark block there would just be a hole in
+        the page. See obsidian/frontend/hero-scene.md.
+      */}
+      <div className="flex justify-center rounded-panel bg-surface-inverse px-4 py-6 sm:bg-transparent sm:p-0 lg:justify-end">
         {withScene ? (
           <LazyHangTag />
         ) : (

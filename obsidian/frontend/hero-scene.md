@@ -72,6 +72,13 @@ its colours belong to the card, not to the page it hangs in front of. `--tag-pap
 is white rather than cream — on the cream ground a cream card had almost no edge
 and read as a ghost on a phone.
 
+**The plinth.** White paper on a cream page is a weak contrast, and at 250 px the
+tag lost against it even after the paper went white. Below `sm` the tag therefore
+hangs against `bg-surface-inverse` — a dark rounded panel in the hero grid cell.
+The canvas is `alpha: true`, so the plinth simply shows through it. It is
+phone-only on purpose: from `sm` up the canvas is 384 px and the tag carries
+itself, where a dark block would read as a hole punched in the page.
+
 Two things fall out of that. The scene never has to react to a theme change
 after construction (it samples the tokens once, in the React leaf, and builds
 the texture from them; the site has one appearance anyway — see [[decisions-log]]

@@ -11,9 +11,9 @@ export interface TagCardProps {
  * the WebGL scene, it is the no-WebGL fallback, and it is the placeholder the
  * canvas cross-fades over once the scene has warmed up.
  *
- * It uses the theme-independent `tag-*` roles for exactly the reason the scene
- * does — printed card looks the same in either theme, so the swap between this
- * and the canvas is invisible.
+ * It uses the `tag-*` roles for exactly the reason the scene does — they belong
+ * to the printed card rather than to the page behind it, so this and the canvas
+ * resolve to the same colours and the swap between them is invisible.
  */
 export const TagCard = ({ className = "" }: TagCardProps) => (
   <figure
