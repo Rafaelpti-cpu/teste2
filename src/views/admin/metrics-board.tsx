@@ -1,14 +1,13 @@
 import Link from "next/link";
 
-import type { MetricsSummary } from "@/types/analytics";
+import type { MetricsSummary, ProductCount } from "@/types/analytics";
+
+import { MetricsChart } from "./metrics-chart";
 
 export interface MetricsBoardProps {
   summary: MetricsSummary;
   ranges: number[];
 }
-
-/** `2026-07-28` → `28/07`. Built by hand: the string is already local. */
-const shortDay = (day: string) => `${day.slice(8, 10)}/${day.slice(5, 7)}`;
 
 const RANGE_LABEL: Record<number, string> = {
   7: "7 dias",
@@ -16,22 +15,24 @@ const RANGE_LABEL: Record<number, string> = {
   90: "90 dias",
 };
 
+/** How many pieces the ranking shows before the rest are folded away. */
+const RANKED = 10;
+
 /**
  * The metrics screen.
  *
- * A Server Component with no chart library: the bars are `<div>`s sized by
- * percentage. A dependency to draw forty rectangles would be the largest thing
- * in the admin bundle, and this survives without JavaScript at all.
+ * Three questions, in the order the shop asks them: how did the site do, how is
+ * that changing, and which pieces did it. No chart library — see
+ * [[metrics-chart]] for why.
  */
 export const MetricsBoard = ({ summary, ranges }: MetricsBoardProps) => {
-  const peak = Math.max(1, ...summary.daily.map((entry) => entry.views));
   const rate =
-    summary.views > 0
-      ? Math.round((summary.whatsapp / summary.views) * 100)
-      : 0;
+    summary.views > 0 ? Math.round((summary.whatsapp / summary.views) * 100) : 0;
+  const top = summary.products.slice(0, RANKED);
+  const rest = summary.products.length - top.length;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-12">
       <nav aria-label="Período" className="flex flex-wrap gap-2">
         {ranges.map((days) => (
           <Link
@@ -57,110 +58,84 @@ export const MetricsBoard = ({ summary, ranges }: MetricsBoardProps) => {
         </p>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
-        <Figure
-          value={summary.visits}
-          label="Visitas"
-          hint="Pessoas diferentes que abriram o site no período."
-        />
-        <Figure
-          value={summary.views}
-          label="Páginas vistas"
-          hint="Cada peça aberta e cada página conta uma vez."
-        />
-        <Figure
-          value={summary.whatsapp}
-          label="Cliques no WhatsApp"
-          hint="Quantas conversas o site começou."
-        />
-        <Figure
-          value={`${rate}%`}
-          label="Viraram conversa"
-          hint="De cada 100 páginas vistas, quantas foram para o WhatsApp."
-        />
-      </dl>
-
-      <section aria-labelledby="por-dia" className="flex flex-col gap-4">
-        <h2 id="por-dia" className="font-display text-xl font-light">
-          Por dia
+      <section aria-labelledby="resumo" className="flex flex-col gap-6">
+        <h2 id="resumo" className="sr-only">
+          Resumo do período
         </h2>
-        <ul className="flex flex-col gap-1">
-          {summary.daily.map((entry) => (
-            <li key={entry.day} className="flex items-center gap-3 text-sm">
-              <span className="w-12 shrink-0 tabular-nums text-foreground-muted">
-                {shortDay(entry.day)}
-              </span>
-              <span className="h-5 flex-1 overflow-hidden rounded-control bg-surface-muted">
-                <span
-                  className="block h-full rounded-control bg-decor-accent-soft"
-                  style={{ width: `${(entry.views / peak) * 100}%` }}
-                />
-              </span>
-              <span className="w-10 shrink-0 text-right tabular-nums text-foreground">
-                {entry.views}
-              </span>
-              <span
-                className="w-16 shrink-0 text-right tabular-nums text-foreground-muted"
-                title="Cliques no WhatsApp"
-              >
-                {entry.whatsapp > 0 ? `${entry.whatsapp} 💬` : "—"}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+          <Figure
+            value={summary.visits}
+            label="Visitas"
+            hint="Pessoas diferentes que abriram o site."
+          />
+          <Figure
+            value={summary.views}
+            label="Páginas vistas"
+            hint="Cada peça aberta conta uma."
+          />
+          <Figure
+            value={summary.whatsapp}
+            label="Conversas"
+            hint="Cliques no botão do WhatsApp."
+            strong
+          />
+          <Figure
+            value={`${rate}%`}
+            label="Viraram conversa"
+            hint="De cada 100 páginas vistas."
+          />
+        </dl>
       </section>
 
-      <section aria-labelledby="por-peca" className="flex flex-col gap-4">
-        <h2 id="por-peca" className="font-display text-xl font-light">
+      <section aria-labelledby="movimento" className="flex flex-col gap-5">
+        <h2 id="movimento" className="font-display text-2xl font-light">
+          Movimento
+        </h2>
+        <MetricsChart daily={summary.daily} />
+      </section>
+
+      <section aria-labelledby="pecas" className="flex flex-col gap-5">
+        <h2 id="pecas" className="font-display text-2xl font-light">
           Peças mais procuradas
         </h2>
 
-        {summary.products.length === 0 ? (
+        {top.length === 0 ? (
           <p className="text-sm text-foreground-muted">
-            Ainda não há registro de peças abertas neste período.
+            Ainda não há registro de peças abertas neste período. Assim que
+            alguém abrir uma peça no site, ela aparece aqui.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[30rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border-subtle text-left text-foreground-muted">
-                  <th className="py-2 font-normal">Peça</th>
-                  <th className="py-2 text-right font-normal">Aberturas</th>
-                  <th className="py-2 text-right font-normal">WhatsApp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.products.map((product) => (
-                  <tr
-                    key={product.slug}
-                    className="border-b border-border-subtle last:border-0"
-                  >
-                    <td className="py-3 pr-4">
-                      <Link
-                        href={`/produto/${product.slug}`}
-                        className="underline underline-offset-4 transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground-accent"
-                      >
-                        {product.name}
-                      </Link>
-                    </td>
-                    <td className="py-3 text-right tabular-nums">
-                      {product.views}
-                    </td>
-                    <td className="py-3 text-right tabular-nums font-medium">
-                      {product.whatsapp}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <p className="max-w-[60ch] text-sm text-foreground-muted">
+              Ordenadas por conversas, não por visualizações. Muita abertura e
+              nenhuma conversa costuma ser peça que a foto promete e a descrição
+              não entrega.
+            </p>
+            <ol className="flex flex-col">
+              {top.map((product, index) => (
+                <ProductRank
+                  key={product.slug}
+                  product={product}
+                  position={index + 1}
+                  peak={Math.max(1, ...top.map((entry) => entry.views))}
+                />
+              ))}
+            </ol>
+            {rest > 0 && (
+              <p className="text-sm text-foreground-muted">
+                E mais {rest} {rest === 1 ? "peça" : "peças"} com menos
+                movimento.
+              </p>
+            )}
+          </>
         )}
       </section>
 
-      <p className="max-w-[60ch] text-xs text-foreground-muted">
+      <p className="max-w-[60ch] border-t border-border-subtle pt-6 text-xs text-foreground-muted">
         A contagem não usa cookies e não guarda nada sobre quem visitou — nem
         e-mail, nem localização, nem o aparelho. Uma visita é um navegador com
-        uma aba aberta; se a mesma pessoa voltar amanhã, conta de novo.
+        uma aba aberta; se a mesma pessoa voltar amanhã, conta de novo. Suas
+        próprias visitas ao admin não entram na conta.
       </p>
     </div>
   );
@@ -170,18 +145,77 @@ const Figure = ({
   value,
   label,
   hint,
+  strong = false,
 }: {
   value: number | string;
   label: string;
   hint: string;
+  strong?: boolean;
 }) => (
   <div className="flex flex-col gap-1">
     <dt className="text-xs tracking-[0.2em] text-foreground-muted uppercase">
       {label}
     </dt>
-    <dd className="font-display text-4xl font-light tabular-nums text-foreground">
+    <dd
+      className={`font-display text-4xl font-light tabular-nums ${
+        strong ? "text-foreground-accent" : "text-foreground"
+      }`}
+    >
       {value}
     </dd>
     <p className="text-xs text-foreground-muted">{hint}</p>
   </div>
 );
+
+const ProductRank = ({
+  product,
+  position,
+  peak,
+}: {
+  product: ProductCount;
+  position: number;
+  peak: number;
+}) => {
+  const rate =
+    product.views > 0 ? Math.round((product.whatsapp / product.views) * 100) : 0;
+
+  return (
+    <li className="flex items-center gap-4 border-b border-border-subtle py-4 last:border-0">
+      <span className="w-6 shrink-0 font-display text-lg font-light tabular-nums text-foreground-muted">
+        {position}
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <Link
+          href={`/produto/${product.slug}`}
+          className="truncate text-sm text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground-accent"
+        >
+          {product.name}
+        </Link>
+        <span
+          aria-hidden="true"
+          className="h-1 w-full overflow-hidden rounded-pill bg-surface-muted"
+        >
+          <span
+            className="block h-full rounded-pill bg-decor-accent-soft"
+            style={{ width: `${(product.views / peak) * 100}%` }}
+          />
+        </span>
+      </div>
+
+      <div className="flex shrink-0 items-baseline gap-4 text-right">
+        <span className="text-sm tabular-nums text-foreground-muted">
+          {product.views}
+          <span className="sr-only"> aberturas</span>
+        </span>
+        <span className="font-display text-xl font-light tabular-nums text-foreground">
+          {product.whatsapp}
+          <span className="sr-only"> conversas</span>
+        </span>
+        <span className="w-10 text-xs tabular-nums text-foreground-muted">
+          {product.views > 0 ? `${rate}%` : "—"}
+        </span>
+      </div>
+    </li>
+  );
+};
