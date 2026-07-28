@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 import { getCatalogBackend, getCatalogStore } from "@/lib/catalog";
+import { getStorageUsage } from "@/lib/catalog/storage";
 import { categoriesOf, DEFAULT_CATEGORIES } from "@/types/catalog";
 
 import { AdminShell } from "./admin-shell";
@@ -28,6 +29,7 @@ export const ProductFormView = async ({ id }: ProductFormViewProps) => {
   return (
     <AdminShell
       backend={getCatalogBackend()}
+      usage={await getStorageUsage()}
       locked={await isAdminLocked()}
       title={product ? "Editar peça" : "Nova peça"}
     >

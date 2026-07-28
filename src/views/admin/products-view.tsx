@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getStorageUsage } from "@/lib/catalog/storage";
 import { getCatalogBackend, getCatalogStore } from "@/lib/catalog";
 import { isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 
@@ -20,6 +21,7 @@ export const AdminProductsView = async () => {
   return (
     <AdminShell
       backend={backend}
+      usage={await getStorageUsage()}
       locked={await isAdminLocked()}
       tab="produtos"
       title="Produtos"

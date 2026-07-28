@@ -60,6 +60,34 @@ can read or write. Do not disable it.
 There is no `@supabase/supabase-js` dependency: the six calls involved are plain
 `fetch` against PostgREST and Storage, which keeps the serverless bundle small.
 
+## Photo storage has a ceiling, and the admin shows it
+
+`src/lib/catalog/storage.ts` sums the bucket (paginated, 1000 at a time; folder
+placeholders carry no `metadata` and are skipped) and compares it to
+`SUPABASE_STORAGE_LIMIT_MB`, default 1024 — the free tier.
+
+Two things use it:
+
+- **A gauge in the admin chrome**, on every page rather than behind a settings
+  link. A number you have to go looking for is one you read for the first time
+  on the day it runs out. Quiet under 75 %, then it starts saying what to do.
+- **The upload endpoint refuses** a file that would cross the limit, with a 507
+  and a sentence in Portuguese. Without it, Supabase rejects the write itself —
+  as a 400, halfway through a batch, with some photos already saved and a
+  message nobody can act on.
+
+> [!important] `null` means "unknown", and unknown never blocks
+> `getStorageUsage()` returns `null` on the file backing and whenever the
+> listing fails. Both the gauge and the guard treat that as "carry on". A
+> monitoring feature must not be able to stop the shop from working.
+
+The reading is cached for 60 s and invalidated after each upload, so the gauge
+moves immediately without listing the bucket on every page load.
+
+Uploads are stored **as they arrive** — a phone photo is 3–4 MB, so the ceiling
+is roughly 285 photos. Nothing resizes before upload yet; that is the obvious
+next lever, and it would also fix the slow upload over mobile data in the shop.
+
 ## Migrating file → Supabase
 
 The stored shapes are identical, so the JSON rows can be posted straight into

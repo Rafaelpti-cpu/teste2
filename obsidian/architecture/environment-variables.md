@@ -24,6 +24,7 @@ Rules for handling configuration and secrets.
 | `SUPABASE_URL` | server-only | Supabase project URL. Set it **with** the service key to move the catalogue off the local file. See [[catalog-store]]. |
 | `SUPABASE_SERVICE_ROLE_KEY` | server-only | Bypasses row-level security — **never** `NEXT_PUBLIC_`, never committed. Absent → the catalogue falls back to `.data/products.json`. |
 | `SUPABASE_STORAGE_BUCKET` | server-only | Bucket for product photos. Defaults to `product-images`. |
+| `SUPABASE_STORAGE_LIMIT_MB` | server-only | What the admin's storage gauge treats as full, and the ceiling the upload endpoint refuses to cross. Defaults to `1024` — the free tier. **Raise it when the Supabase plan changes**, or the shop will be blocked from uploading with room to spare. See [[catalog-store]]. |
 | `ADMIN_PASSWORD` | server-only | Locks `/admin`. **While unset the admin is open to anyone with the URL** — set it before publishing. See [[admin-area]], ADR-0023. |
 
 Documented in `.env.example` (committed). Validated by `src/env.ts` (zod):

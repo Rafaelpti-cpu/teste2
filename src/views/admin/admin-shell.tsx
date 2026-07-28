@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import type { CatalogBackend } from "@/lib/catalog/store";
+import type { StorageUsage } from "@/lib/catalog/storage";
+
+import { StorageMeter } from "./storage-meter";
 
 export type AdminTab = "produtos" | "textos" | "medicoes" | "acessos";
 
@@ -13,6 +16,8 @@ export interface AdminShellProps {
   locked: boolean;
   /** Which nav entry is current. Omit on pages that are not a tab (the form). */
   tab?: AdminTab;
+  /** Photo storage usage. `null` on the file backing, where there is no quota. */
+  usage?: StorageUsage | null;
 }
 
 const BACKEND_LABEL: Record<CatalogBackend, string> = {
@@ -35,6 +40,7 @@ export const AdminShell = ({
   backend,
   locked,
   tab,
+  usage = null,
 }: AdminShellProps) => (
   <div className="min-h-lvh bg-background">
     <header className="border-b border-border-subtle">
@@ -93,6 +99,16 @@ export const AdminShell = ({
         </div>
         {action}
       </div>
+
+      {/*
+        In the chrome, not on a settings page: a gauge you have to go looking
+        for is one you read for the first time on the day it runs out.
+      */}
+      {usage && (
+        <div className="pb-8">
+          <StorageMeter usage={usage} />
+        </div>
+      )}
 
       {children}
     </main>

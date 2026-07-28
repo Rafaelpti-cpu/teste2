@@ -1,5 +1,6 @@
 import { isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 import { getCatalogBackend } from "@/lib/catalog";
+import { getStorageUsage } from "@/lib/catalog/storage";
 import { defaultSiteContent, readSiteContent } from "@/lib/content";
 
 import { AdminShell } from "./admin-shell";
@@ -16,6 +17,7 @@ export const AdminContentView = async () => {
   return (
     <AdminShell
       backend={getCatalogBackend()}
+      usage={await getStorageUsage()}
       locked={await isAdminLocked()}
       tab="textos"
       title="Textos do site"

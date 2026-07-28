@@ -1,6 +1,7 @@
 import { getCurrentUser, isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 import { listUsers, toPublic } from "@/lib/admin/users";
 import { getCatalogBackend } from "@/lib/catalog";
+import { getStorageUsage } from "@/lib/catalog/storage";
 
 import { AdminShell } from "./admin-shell";
 import { UsersForm } from "./users-form";
@@ -13,6 +14,7 @@ export const AdminUsersView = async () => {
   return (
     <AdminShell
       backend={getCatalogBackend()}
+      usage={await getStorageUsage()}
       locked={await isAdminLocked()}
       tab="acessos"
       title="Acessos"

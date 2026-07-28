@@ -1,6 +1,10 @@
 import { assertAdmin } from "@/lib/admin/auth";
 import { ApiError, handle } from "@/lib/api";
 import { getCatalogStore } from "@/lib/catalog";
+import {
+  getStorageUsage,
+  invalidateStorageUsage,
+} from "@/lib/catalog/storage";
 
 /**
  * Product photo upload. Multipart rather than JSON — a base64 body would be a
@@ -36,9 +40,27 @@ export const POST = handle(async (req) => {
     throw new ApiError(413, "file_too_large", "A foto passa de 8 MB.");
   }
 
+  /*
+    Refuse the upload that would go over the plan's storage instead of letting
+    Supabase reject it — its error arrives as a 400 with a message nobody can
+    act on, halfway through a batch, with some photos already saved.
+
+    `null` means the usage could not be read (file backing, or the listing
+    failed). Unknown must never block the shop from working, so it passes.
+  */
+  const usage = await getStorageUsage();
+  if (usage && usage.usedBytes + file.size > usage.limitBytes) {
+    throw new ApiError(
+      507,
+      "storage_full",
+      "O espaço de fotos acabou. Apague fotos de peças antigas para liberar, ou aumente o plano do banco.",
+    );
+  }
+
   const url = await getCatalogStore().saveImage(
     await file.arrayBuffer(),
     file.name,
   );
+  invalidateStorageUsage();
   return { url };
 });

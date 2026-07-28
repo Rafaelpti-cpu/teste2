@@ -1,6 +1,7 @@
 import { getMetrics } from "@/lib/analytics";
 import { requireAdmin, isAdminLocked } from "@/lib/admin/auth";
 import { getCatalogBackend } from "@/lib/catalog";
+import { getStorageUsage } from "@/lib/catalog/storage";
 
 import { AdminShell } from "./admin-shell";
 import { MetricsBoard } from "./metrics-board";
@@ -35,6 +36,7 @@ export const AdminMetricsView = async ({
   return (
     <AdminShell
       backend={getCatalogBackend()}
+      usage={await getStorageUsage()}
       locked={locked}
       tab="medicoes"
       title="Medições"
