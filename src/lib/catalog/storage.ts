@@ -85,7 +85,16 @@ const listAll = async (): Promise<StoredFile[]> => {
     );
     if (!response.ok) {
       const detail = (await response.text().catch(() => "")).slice(0, 300);
-      throw new Error(`HTTP ${response.status} — ${detail || "sem detalhe"}`);
+      /*
+        The bucket name is in the message because the first time this fired in
+        production it said "Bucket not found" for a bucket that demonstrably
+        existed — the app was simply looking under another name, set in
+        SUPABASE_STORAGE_BUCKET. Naming what was searched for turns that from a
+        deploy-cycle guessing game into one glance.
+      */
+      throw new Error(
+        `Pasta "${config.bucket}" — HTTP ${response.status} — ${detail || "sem detalhe"}`,
+      );
     }
 
     const page = (await response.json()) as StorageObject[];
