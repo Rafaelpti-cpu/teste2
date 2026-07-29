@@ -33,8 +33,15 @@ const CACHE_MS = 60_000;
 
 let cache: { at: number; value: StorageUsage } | null = null;
 
-/** Storage lists a page at a time; the bucket is flat, so this walks it all. */
-const PAGE = 1000;
+/**
+ * Page size for the bucket listing.
+ *
+ * 100, not 1000: that is the value Supabase's own client sends and the one
+ * their docs use, and a larger page is the first thing to suspect when a
+ * listing that works against a stub fails against the real service. At a few
+ * hundred photos this costs two or three round trips and buys certainty.
+ */
+const PAGE = 100;
 
 interface StorageObject {
   name: string;
@@ -65,11 +72,21 @@ const listAll = async (): Promise<StoredFile[]> => {
           authorization: `Bearer ${config.serviceKey}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ prefix: "", limit: PAGE, offset }),
+        // `sortBy` is what supabase-js always sends; sending it too removes one
+        // more difference between this and the client the service is tested with.
+        body: JSON.stringify({
+          prefix: "",
+          limit: PAGE,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        }),
         cache: "no-store",
       },
     );
-    if (!response.ok) throw new Error(`Storage ${response.status}`);
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => "")).slice(0, 300);
+      throw new Error(`HTTP ${response.status} — ${detail || "sem detalhe"}`);
+    }
 
     const page = (await response.json()) as StorageObject[];
     for (const object of page) {
@@ -197,10 +214,27 @@ export interface StorageReport {
  *
  * 📖 Docs: obsidian/backend/catalog-store.md
  */
+/**
+ * Why the report is not available, when it is not.
+ *
+ * A discriminated union rather than `null`, because the two reasons need
+ * different words on screen: "photos live on disk here" is reassuring and
+ * "I could not read the bucket" is a problem. Conflating them printed a
+ * sentence that contradicted the backend label three lines above it.
+ *
+ * `detail` carries the failure to the admin — the only reader — because the
+ * server log it would otherwise die in is not somewhere the shop can look, and
+ * asking them to relay a status code beats guessing across a deploy cycle.
+ */
+export type StorageReportResult =
+  | { status: "ok"; report: StorageReport }
+  | { status: "unsupported" }
+  | { status: "error"; detail: string };
+
 export const getStorageReport = async (
   products: { id: string; name: string; images: string[] }[],
-): Promise<StorageReport | null> => {
-  if (!getSupabaseConfig()) return null;
+): Promise<StorageReportResult> => {
+  if (!getSupabaseConfig()) return { status: "unsupported" };
 
   try {
     /*
@@ -250,13 +284,19 @@ export const getStorageReport = async (
     const orphans = files.filter((file) => !used.has(file.name));
 
     return {
-      usage,
-      products: perProduct.sort((a, b) => b.bytes - a.bytes),
-      orphans,
-      orphanBytes: orphans.reduce((sum, file) => sum + file.bytes, 0),
+      status: "ok",
+      report: {
+        usage,
+        products: perProduct.sort((a, b) => b.bytes - a.bytes),
+        orphans,
+        orphanBytes: orphans.reduce((sum, file) => sum + file.bytes, 0),
+      },
     };
   } catch (error) {
     console.error("[catalog/storage] report unavailable:", error);
-    return null;
+    return {
+      status: "error",
+      detail: error instanceof Error ? error.message : String(error),
+    };
   }
 };

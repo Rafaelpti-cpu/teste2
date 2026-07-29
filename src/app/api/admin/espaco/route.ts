@@ -17,9 +17,9 @@ export const DELETE = handle(async () => {
   await assertAdmin();
 
   const products = await getCatalogStore().list();
-  const report = await getStorageReport(products);
+  const result = await getStorageReport(products);
 
-  if (!report) {
+  if (result.status !== "ok") {
     throw new ApiError(
       503,
       "storage_unavailable",
@@ -27,9 +27,8 @@ export const DELETE = handle(async () => {
     );
   }
 
-  const removed = await deleteStorageObjects(
-    report.orphans.map((file) => file.name),
-  );
+  const { orphans, orphanBytes } = result.report;
+  const removed = await deleteStorageObjects(orphans.map((file) => file.name));
 
-  return { removed, freedBytes: report.orphanBytes };
+  return { removed, freedBytes: orphanBytes };
 });

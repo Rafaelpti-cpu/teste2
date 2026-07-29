@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 import { getCatalogBackend, getCatalogStore } from "@/lib/catalog";
-import { getStorageReport } from "@/lib/catalog/storage";
+import { getStorageReport, type StorageReport } from "@/lib/catalog/storage";
 
 import { AdminShell } from "./admin-shell";
 import { StorageCleanup } from "./storage-cleanup";
@@ -20,27 +20,53 @@ export const AdminStorageView = async () => {
   await requireAdmin();
 
   const products = await getCatalogStore().list();
-  const [report, locked] = await Promise.all([
+  const backend = getCatalogBackend();
+  const [result, locked] = await Promise.all([
     getStorageReport(products),
     isAdminLocked(),
   ]);
 
   return (
     <AdminShell
-      backend={getCatalogBackend()}
+      backend={backend}
       // From the report's own listing, not the cache — see getStorageReport.
-      usage={report?.usage ?? null}
+      usage={result.status === "ok" ? result.report.usage : null}
       locked={locked}
       tab="espaco"
       title="Espaço"
     >
-      {!report ? (
+      {result.status === "ok" ? (
+        <Report report={result.report} />
+      ) : result.status === "error" ? (
+        /*
+          Supabase is configured but the bucket could not be read. This branch
+          used to print "the photos are on disk", which was false and was
+          contradicted by the backend label three lines above it.
+        */
+        <div className="flex max-w-[60ch] flex-col gap-4 text-sm text-foreground-muted">
+          <p className="text-foreground">
+            Não consegui ler o espaço das fotos.
+          </p>
+          <p>
+            O site continua funcionando e as peças que já existem não são
+            afetadas. Mas a mesma pasta recebe os envios, então{" "}
+            <strong className="font-medium text-foreground">
+              adicionar fotos novas provavelmente também vai falhar
+            </strong>{" "}
+            — vale testar antes de contar com isso.
+          </p>
+          <p>
+            O que o banco respondeu, para eu poder consertar:
+          </p>
+          <pre className="overflow-x-auto rounded-card bg-surface-muted p-3 text-xs text-foreground">
+            {result.detail}
+          </pre>
+        </div>
+      ) : (
         <p className="max-w-[60ch] text-sm text-foreground-muted">
           O espaço só é medido quando as fotos ficam no Supabase. Nesta
           instalação elas estão em disco, e o tamanho é uma questão do servidor.
         </p>
-      ) : (
-        <Report report={report} />
       )}
     </AdminShell>
   );
@@ -49,7 +75,7 @@ export const AdminStorageView = async () => {
 const Report = ({
   report,
 }: {
-  report: NonNullable<Awaited<ReturnType<typeof getStorageReport>>>;
+  report: StorageReport;
 }) => {
   const { usage, products, orphans, orphanBytes } = report;
   const freeBytes = Math.max(0, usage.limitBytes - usage.usedBytes);
