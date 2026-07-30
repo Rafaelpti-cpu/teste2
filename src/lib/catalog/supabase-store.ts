@@ -27,15 +27,40 @@ interface SupabaseConfig {
   bucket: string;
 }
 
+const DEFAULT_BUCKET = "product-images";
+
+/**
+ * The bucket name, defended against the paste.
+ *
+ * A real one is lowercase letters, digits, dots and dashes — never a space and
+ * never a newline. This variable was once set, from a phone, to the whole
+ * documentation table it was listed in; every read and every upload then failed
+ * with "Bucket not found", which reads like a missing bucket rather than a
+ * malformed name and cost days.
+ *
+ * Trimming fixes the ordinary case (a trailing newline from a copy). Anything
+ * still malformed falls back to the default and says so loudly in the log,
+ * because a shop that cannot upload photos is worse than a variable quietly
+ * ignored — and the name is now printed in the error either way.
+ */
+const bucketName = (): string => {
+  const raw = process.env.SUPABASE_STORAGE_BUCKET?.trim();
+  if (!raw) return DEFAULT_BUCKET;
+  if (!/^[a-z0-9][a-z0-9.\-_]*$/i.test(raw)) {
+    console.error(
+      `[catalog/supabase] SUPABASE_STORAGE_BUCKET não parece um nome de pasta ` +
+        `(${JSON.stringify(raw.slice(0, 60))}…). Usando "${DEFAULT_BUCKET}".`,
+    );
+    return DEFAULT_BUCKET;
+  }
+  return raw;
+};
+
 export const getSupabaseConfig = (): SupabaseConfig | null => {
-  const url = process.env.SUPABASE_URL?.replace(/\/+$/, "");
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.trim().replace(/\/+$/, "");
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!url || !serviceKey) return null;
-  return {
-    url,
-    serviceKey,
-    bucket: process.env.SUPABASE_STORAGE_BUCKET || "product-images",
-  };
+  return { url, serviceKey, bucket: bucketName() };
 };
 
 const config = (): SupabaseConfig => {
