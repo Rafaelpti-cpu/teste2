@@ -92,18 +92,73 @@ const toRow = (input: Partial<ProductInput>) => ({
   ...(input.active !== undefined && { active: input.active }),
 });
 
+const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
+
+/**
+ * How many times a **read** is attempted before giving up.
+ *
+ * Only reads. A retried `POST` would create two products, and a retried
+ * `DELETE` would report a 404 for work that succeeded — the storefront going
+ * blank is worth guarding against, duplicating the shop's data is not.
+ *
+ * The reason it matters: every page render on the site reads this table, so a
+ * single transient failure — a dropped connection, a cold serverless start
+ * landing on a busy pool — takes the whole storefront down to the error screen
+ * for that visitor. One retry turns that into a few hundred milliseconds
+ * nobody notices.
+ */
+const READ_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 150;
+
+const isRead = (init: RequestInit) =>
+  !init.method || init.method.toUpperCase() === "GET";
+
 const rest = async (path: string, init: RequestInit = {}) => {
   const { url, serviceKey } = config();
-  const response = await fetch(`${url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceKey,
-      authorization: `Bearer ${serviceKey}`,
-      "content-type": "application/json",
-      ...init.headers,
-    },
-    cache: "no-store",
-  });
+  const attempts = isRead(init) ? READ_ATTEMPTS : 1;
+
+  let response: Response | null = null;
+  let networkError: unknown = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    networkError = null;
+    try {
+      response = await fetch(`${url}/rest/v1/${path}`, {
+        ...init,
+        headers: {
+          apikey: serviceKey,
+          authorization: `Bearer ${serviceKey}`,
+          "content-type": "application/json",
+          ...init.headers,
+        },
+        cache: "no-store",
+      });
+    } catch (cause) {
+      // The connection never completed — no response to inspect.
+      networkError = cause;
+    }
+
+    // A 4xx is our bug or our data; repeating it only wastes the visitor's time.
+    const retriable =
+      networkError !== null || (response !== null && response.status >= 500);
+    if (!retriable) break;
+
+    if (attempt < attempts) {
+      console.warn(
+        `[catalog/supabase] leitura falhou (tentativa ${attempt}/${attempts}), repetindo`,
+      );
+      await sleep(RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  if (!response) {
+    console.error("[catalog/supabase] sem resposta:", networkError);
+    throw new ApiError(
+      502,
+      "supabase_error",
+      "Não foi possível falar com o banco de dados.",
+    );
+  }
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");

@@ -9,6 +9,30 @@ import { useEffect } from "react";
  * The WhatsApp way out matters more than the retry: if the site is broken, the
  * customer should still be able to reach the shop.
  */
+/**
+ * A chunk that no longer exists.
+ *
+ * Every deploy renames the JavaScript files. A browser holding a page from the
+ * previous build — an open tab, a bfcache restore, a cached document — asks for
+ * a filename that is gone and the import rejects. The customer sees a broken
+ * site; a reload fixes it, because the fresh HTML points at the current names.
+ *
+ * The wording varies by browser and by bundler, so this matches on the family
+ * rather than an exact string.
+ */
+const isStaleBuild = (error: Error) => {
+  const text = `${error.name} ${error.message}`;
+  return (
+    /ChunkLoadError/i.test(text) ||
+    /Loading chunk [\w-]+ failed/i.test(text) ||
+    /(dynamically imported module|importing a module script failed)/i.test(text)
+  );
+};
+
+/** Guards the auto-reload, so a genuinely broken build cannot loop forever. */
+const RELOAD_KEY = "renova.reloaded-at";
+const RELOAD_COOLDOWN_MS = 60_000;
+
 export default function Error({
   error,
   reset,
@@ -19,6 +43,22 @@ export default function Error({
   useEffect(() => {
     // Surface the error for logging/monitoring (kept by removeConsole's exclude).
     console.error(error);
+
+    if (!isStaleBuild(error)) return;
+
+    /*
+      Reload once, not on a loop. If the reload lands on a build that is still
+      broken, the timestamp keeps this from thrashing and the customer gets the
+      page below — which at least offers WhatsApp.
+    */
+    try {
+      const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+      if (Date.now() - last < RELOAD_COOLDOWN_MS) return;
+      sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+      window.location.reload();
+    } catch {
+      // Storage unavailable — better to show the page than to risk a loop.
+    }
   }, [error]);
 
   return (
@@ -51,6 +91,18 @@ export default function Error({
             Falar no WhatsApp
           </a>
         </div>
+
+        {/*
+          The digest is the only handle on what actually failed — the browser
+          console is not somewhere a customer looks, and the server log is not
+          somewhere the shop can reach. Small and unlabelled-as-jargon, so it
+          reads as a reference number rather than as a leak.
+        */}
+        {error.digest && (
+          <p className="text-xs text-foreground-muted">
+            Código do erro: {error.digest}
+          </p>
+        )}
       </div>
     </main>
   );
