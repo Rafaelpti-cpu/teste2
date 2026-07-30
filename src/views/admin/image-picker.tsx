@@ -36,12 +36,24 @@ export const ImagePicker = ({ value, onChange }: ImagePickerProps) => {
 
     const uploaded: string[] = [];
     const failed: string[] = [];
+    /*
+      The server's own words, kept for the message.
+
+      "Não consegui enviar X.jpeg" was true and useless: it named the file,
+      which the shop can see, and hid the reason, which only the server knows.
+      When the bucket was misconfigured this screen said nothing for days while
+      the API had been answering exactly what was wrong the whole time.
+    */
+    let reason: string | null = null;
 
     for (const file of Array.from(files)) {
       try {
         uploaded.push(await uploadImage(file));
       } catch (cause) {
         failed.push(file.name);
+        if (!reason && cause instanceof Error && cause.message) {
+          reason = cause.message;
+        }
         // Keep going: one bad photo must not cost the whole batch.
         console.error("[admin] upload falhou", cause);
       } finally {
@@ -51,11 +63,11 @@ export const ImagePicker = ({ value, onChange }: ImagePickerProps) => {
 
     if (uploaded.length > 0) onChange([...value, ...uploaded]);
     if (failed.length > 0) {
-      setError(
+      const what =
         failed.length === 1
-          ? `Não consegui enviar "${failed[0]}".`
-          : `Não consegui enviar ${failed.length} fotos.`,
-      );
+          ? `Não consegui enviar "${failed[0]}"`
+          : `Não consegui enviar ${failed.length} fotos`;
+      setError(reason ? `${what}. ${reason}` : `${what}.`);
     }
 
     setPending(0);

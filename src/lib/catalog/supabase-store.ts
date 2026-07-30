@@ -310,9 +310,19 @@ export const supabaseCatalogStore: CatalogStore = {
     );
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => "");
+      const detail = (await response.text().catch(() => "")).slice(0, 200);
       console.error("[catalog/supabase] upload", response.status, detail);
-      throw new ApiError(502, "upload_failed", "Não foi possível enviar a foto.");
+      /*
+        The bucket and the service's own words go in the message. This endpoint
+        is behind `assertAdmin`, so the only reader is the shop — and a generic
+        "não foi possível" left a misconfigured bucket invisible while the API
+        had been saying precisely what was wrong on every single attempt.
+      */
+      throw new ApiError(
+        502,
+        "upload_failed",
+        `A pasta "${bucket}" recusou: HTTP ${response.status} ${detail || ""}`.trim(),
+      );
     }
 
     // Public bucket — the URL is stable and needs no signing.
