@@ -15,7 +15,10 @@ export default function robots(): MetadataRoute.Robots {
       // results. The area also sends `noindex` itself — see app/admin/layout.tsx.
       disallow: ["/admin", "/api/"],
     },
-    sitemap: `${siteConfig.url}/sitemap.xml`,
+    // `/sitemap`, not `/sitemap.xml` — that path 404s on the deployment through
+    // four implementations and pointing crawlers at it was pointing them at
+    // nothing. See app/sitemap/route.ts.
+    sitemap: `${siteConfig.url}/sitemap`,
     host: siteConfig.url,
   };
 }

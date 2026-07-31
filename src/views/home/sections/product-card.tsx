@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { Hover } from "@/components/animation/springs/hover";
 import { Inview } from "@/components/animation/springs/in-view";
@@ -30,13 +31,35 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
     >
       <article className="flex h-full flex-col">
         {/*
-          A button, not a link: it opens the piece on this page. Tapping goes
-          straight to the photos and the details — most customers are on a
-          phone, where the hover swap below never happens.
+          A real link that behaves like a button.
+
+          It was a `<button>`, because tapping should open the dialog rather
+          than cost a page load — most customers are on a phone. The cost was
+          invisible and total: with no `<a>` anywhere on the site, nothing could
+          reach `/produto/<slug>`. Search engines had no path to a single
+          product page, and a customer could not open a piece in a new tab,
+          copy its address, or send it to a friend.
+
+          So: an anchor with the real address, whose click is intercepted. The
+          dialog still opens on a plain tap. A modified click — ctrl, cmd,
+          middle button, "open in new tab" — is left alone and navigates, which
+          is exactly what the person asked for.
         */}
-        <button
-          type="button"
-          onClick={() => onOpen(product)}
+        <Link
+          href={`/produto/${product.slug}`}
+          onClick={(event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            ) {
+              return;
+            }
+            event.preventDefault();
+            onOpen(product);
+          }}
           className="group flex h-full w-full flex-col gap-4 text-left"
           aria-label={`Ver ${product.name}`}
         >
@@ -108,7 +131,7 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
               </ul>
             )}
           </div>
-        </button>
+        </Link>
       </article>
     </Inview>
   );
