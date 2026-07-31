@@ -62,40 +62,96 @@ const writeFileDocument = async (content: HomeContent) => {
   await writeFile(DATA_FILE, JSON.stringify(content, null, 2), "utf8");
 };
 
+const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
+
+/** Reads get three tries; writes get one. Same reasoning as [[catalog-store]]. */
+const READ_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 150;
+
 const supabaseRest = async (query: string, init: RequestInit = {}) => {
   const config = getSupabaseConfig();
   if (!config) {
     throw new ApiError(500, "supabase_not_configured", "Supabase não está configurado.");
   }
 
-  const response = await fetch(`${config.url}/rest/v1/${query}`, {
-    ...init,
-    headers: {
-      apikey: config.serviceKey,
-      authorization: `Bearer ${config.serviceKey}`,
-      "content-type": "application/json",
-      ...init.headers,
-    },
-    cache: "no-store",
-  });
+  const isRead = !init.method || init.method.toUpperCase() === "GET";
+  const attempts = isRead ? READ_ATTEMPTS : 1;
+
+  let response: Response | null = null;
+  let networkError: unknown = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    networkError = null;
+    try {
+      response = await fetch(`${config.url}/rest/v1/${query}`, {
+        ...init,
+        headers: {
+          apikey: config.serviceKey,
+          authorization: `Bearer ${config.serviceKey}`,
+          "content-type": "application/json",
+          ...init.headers,
+        },
+        cache: "no-store",
+      });
+    } catch (cause) {
+      networkError = cause;
+    }
+
+    const retriable =
+      networkError !== null || (response !== null && response.status >= 500);
+    if (!retriable) break;
+    if (attempt < attempts) await sleep(RETRY_DELAY_MS * attempt);
+  }
+
+  if (!response) {
+    console.error("[content/supabase] sem resposta:", networkError);
+    throw new ApiError(502, "supabase_error", "Não foi possível falar com o banco.");
+  }
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     console.error("[content/supabase]", response.status, detail);
-    throw new ApiError(502, "supabase_error", "Não foi possível salvar os textos.");
+    throw new ApiError(
+      502,
+      "supabase_error",
+      `O banco recusou a leitura dos textos: HTTP ${response.status}`,
+    );
   }
   return response;
 };
 
-/** Reads the live copy. Falls back to the defaults, never throws for the site. */
+/**
+ * Reads the live copy. **Never throws** — the storefront gets the defaults
+ * instead of an error page.
+ *
+ * The comment above used to say exactly this while the code did the opposite:
+ * one transient failure reading `site_content` took the whole home page down,
+ * which is what the shop was seeing as "sometimes it breaks and a refresh
+ * fixes it".
+ *
+ * Degrading is right *here* and would be wrong for the catalogue. These are
+ * headings and paragraphs, and `homeContent` is a complete, sensible set of
+ * them — a visitor cannot tell that the shop had edited a subtitle. A missing
+ * catalogue is the opposite: an empty grid says "this shop has nothing", which
+ * is worse than admitting something broke. So this falls back and the products
+ * read still fails loudly.
+ */
 export async function readSiteContent(): Promise<HomeContent> {
-  if (getContentBackend() === "file") return readFileDocument();
+  try {
+    if (getContentBackend() === "file") return await readFileDocument();
 
-  const response = await supabaseRest(
-    `site_content?select=data&id=eq.${ROW_ID}`,
-  );
-  const [row] = (await response.json()) as { data: unknown }[];
-  return withDefaults(row?.data);
+    const response = await supabaseRest(
+      `site_content?select=data&id=eq.${ROW_ID}`,
+    );
+    const [row] = (await response.json()) as { data: unknown }[];
+    return withDefaults(row?.data);
+  } catch (error) {
+    console.error(
+      "[content] leitura falhou, servindo os textos padrão:",
+      error,
+    );
+    return homeContent;
+  }
 }
 
 /** Replaces the copy. The payload is validated by the route before it lands here. */

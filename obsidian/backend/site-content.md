@@ -36,6 +36,29 @@ its default until the shop edits it.
 The same function is why an invalid stored document degrades to the defaults
 with a server-side log instead of taking the site down.
 
+## `readSiteContent()` never throws — and once did
+
+Its doc comment claimed "falls back to the defaults, never throws for the site"
+while the code did the opposite: `supabaseRest` threw on any non-2xx and nothing
+caught it. One transient failure reading `site_content` therefore took the whole
+home page to the error screen. That was the "sometimes it breaks, a refresh
+fixes it" the shop reported, and it survived two wrong diagnoses — a stale
+client chunk, and the catalogue read — because the comment said this path was
+already safe and I believed it.
+
+It is now true: the read is wrapped, logs, and returns `homeContent`.
+
+> [!important] Degrade here, fail loudly for the catalogue
+> These are headings and paragraphs, and the defaults are a complete set of
+> them — a visitor cannot tell the shop had edited a subtitle. An empty product
+> grid is the opposite: it says "this shop has nothing", which is worse than
+> admitting something broke. So the copy read falls back and the products read
+> still errors, with retries, in [[catalog-store]].
+
+Reads here get three attempts with backoff, same as the catalogue. Writes get
+one — retrying a `PUT` of the whole document is safe, but there is no reason to
+hide a failing save from the person who pressed the button.
+
 ## What is deliberately not editable
 
 - **Category names** — `categories[].name` matches a catalogue category and the
