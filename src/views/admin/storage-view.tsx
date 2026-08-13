@@ -116,25 +116,26 @@ const Report = ({
         </dl>
       </section>
 
-      {oversized.length > 0 && (
-        <section aria-labelledby="pesadas" className="flex flex-col gap-4">
-          <h2 id="pesadas" className="font-display text-2xl font-light">
-            Fotos pesadas
+      {files.length > 0 && (
+        <section aria-labelledby="otimizar" className="flex flex-col gap-4">
+          <h2 id="otimizar" className="font-display text-2xl font-light">
+            Otimizar as fotos
           </h2>
           <p className="max-w-[60ch] text-sm text-foreground-muted">
-            {oversized.length}{" "}
-            {oversized.length === 1
-              ? "foto está grande demais e ocupa"
-              : "fotos estão grandes demais e ocupam"}{" "}
-            {formatSize(oversizedBytes)}. Elas subiram no tamanho original do
-            celular, e o site entrega para a cliente exatamente esse tamanho —
-            é o que deixa a página lenta. Encolher não muda nada no visual: a
-            foto continua nítida, só para de carregar megabytes à toa.
+            Passa por todas as fotos guardadas e conserta duas coisas: encolhe
+            as que subiram no tamanho original do celular
+            {oversized.length > 0
+              ? ` (hoje são ${oversized.length}, ocupando ${formatSize(oversizedBytes)})`
+              : " (nenhuma no momento)"}
+            , e marca todas para ficarem guardadas no navegador de quem visita.
+            Sem essa marcação, cada visita baixa o site inteiro de novo — é o
+            que faz as peças irem aparecendo aos poucos.
           </p>
-          <StorageShrink
-            count={oversized.length}
-            label={formatSize(oversizedBytes)}
-          />
+          <p className="max-w-[60ch] text-sm text-foreground-muted">
+            Não muda nada no visual e pode rodar quantas vezes quiser: o que já
+            está certo é pulado.
+          </p>
+          <StorageShrink count={files.length} label={formatSize(usage.usedBytes)} />
         </section>
       )}
 

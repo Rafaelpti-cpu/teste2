@@ -328,7 +328,11 @@ export const supabaseCatalogStore: CatalogStore = {
           apikey: serviceKey,
           authorization: `Bearer ${serviceKey}`,
           "content-type": MIME[extension] ?? "image/jpeg",
-          "cache-control": "public, max-age=31536000, immutable",
+          // Supabase parses this value itself and stores `no-cache` when it does not
+          // recognise the shape — `public, …, immutable` was silently discarded,
+          // so every photo was re-fetched from origin on every single visit,
+          // CDN included. Plain `max-age=<seconds>` is the form it accepts.
+          "cache-control": "max-age=31536000",
         },
         body: bytes,
       },
