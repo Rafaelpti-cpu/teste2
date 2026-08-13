@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Hover } from "@/components/animation/springs/hover";
-import { Inview } from "@/components/animation/springs/in-view";
 import { coverImage, hoverImage, type Product } from "@/types/catalog";
 import { formatInstalments, formatPrice } from "@/utils/format";
 
@@ -16,19 +15,40 @@ export interface ProductCardProps {
   index: number;
 }
 
+/**
+ * Above this position a photo is fetched eagerly instead of lazily.
+ *
+ * Four covers the first row on a phone and most of the first on a desktop —
+ * the pieces someone sees before scrolling, which should not wait for the
+ * lazy-loading pass.
+ */
+const EAGER_BEFORE = 4;
+
 export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
   const cover = coverImage(product);
   const second = hoverImage(product);
 
   return (
-    <Inview
-      tag="li"
-      mode="once"
-      from={{ opacity: 0, y: 48 }}
-      to={{ opacity: 1, y: 0 }}
-      config={{ tension: 130, friction: 27 }}
-      delayIn={(index % 4) * 80}
-    >
+    /*
+      A plain `<li>`, not an `<Inview>`.
+
+      Every reveal in this project renders its "from" state on the server, so a
+      card wrapped in one arrives as `opacity: 0` and stays invisible until
+      ~950 KB of JavaScript has downloaded, hydrated and fired an
+      IntersectionObserver. On a phone over mobile data that is seconds of a
+      catalogue that appears empty — the shop's report was "only two pieces
+      load, then the rest take a while", which is exactly that sequence being
+      watched in real time.
+
+      `enabled={false}` does not help: the component holds at `from` when it is
+      not active, so disabling the animation leaves the card invisible forever.
+      The springs are `#do-not-modify`, and rightly — the fix is not to change
+      how reveals work, it is to stop putting the shop's inventory behind one.
+
+      Headings and decorative blocks keep their reveals. A heading that fades in
+      late is a flourish; a product that does is a lost sale.
+    */
+    <li>
       <article className="flex h-full flex-col">
         {/*
           A real link that behaves like a button.
@@ -85,6 +105,9 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
               fill
               sizes="(max-width: 768px) 50vw, 18rem"
               className="object-cover"
+              // The first row is what a customer sees before scrolling; leaving
+              // it to the lazy pass is why the grid appeared to fill in slowly.
+              priority={index < EAGER_BEFORE}
             />
             {/* The shop's own alternate angle. A cross-fade is opacity only,
                 which is the one case CSS owns (ADR-0014) — no spring needed. */}
@@ -142,6 +165,6 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
           </div>
         </Link>
       </article>
-    </Inview>
+    </li>
   );
 };
