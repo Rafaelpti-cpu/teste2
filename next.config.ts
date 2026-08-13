@@ -14,7 +14,32 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    // Modern formats — smaller than JPEG/PNG; the browser picks what it supports.
+    /*
+      The optimiser is OFF, and this is not a preference — it is a fire.
+
+      Vercel's free tier includes 5 000 image transformations a month. The shop
+      exhausted them, and past the limit the endpoint answers **402**. Worse, my
+      own previous commit narrowed `deviceSizes`, which made the browser ask for
+      widths that had never been generated: twelve of the nineteen images on the
+      home page went from "cached and fine" to broken, live, because of a change
+      meant to save quota. Measured, not guessed — 402 on every uncached width.
+
+      `unoptimized` bypasses the endpoint entirely: `next/image` emits a plain
+      `<img>` at the original file. Nothing to bill, nothing to break. The
+      seeded catalogue is already WebP at ~110 KB a photo, so the storefront
+      barely notices.
+
+      What it does cost: photos uploaded from a phone go out at whatever size
+      the phone produced, which is megabytes. That is the next thing to fix —
+      resizing in the browser before upload — and once it is done, this line
+      stops being an emergency and becomes a reasonable permanent choice.
+
+      Turning optimisation back on means either a paid plan or a month with the
+      counter reset, and re-reading this whole comment first.
+    */
+    unoptimized: true,
+
+    // Kept for the day optimisation comes back on.
     formats: ["image/avif", "image/webp"],
     // Product photos live in Supabase Storage when that backing is configured;
     // `next/image` refuses remote hosts that are not listed here.
