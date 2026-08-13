@@ -55,6 +55,9 @@ export interface StoredFile {
 }
 
 /** Walks the whole bucket. Flat by construction — `saveImage` writes no folders. */
+/** Public name for the same walk, used by the shrink job. */
+export const listStorageFiles = (): Promise<StoredFile[]> => listAll();
+
 const listAll = async (): Promise<StoredFile[]> => {
   const config = getSupabaseConfig();
   if (!config) return [];
@@ -202,6 +205,8 @@ export interface StorageReport {
   usage: StorageUsage;
   /** Heaviest first — the ones worth looking at when space runs low. */
   products: ProductUsage[];
+  /** Every file in the bucket, so the screen can spot the heavy ones. */
+  files: StoredFile[];
   /** Files in the bucket that no piece points at. Pure waste. */
   orphans: StoredFile[];
   orphanBytes: number;
@@ -296,6 +301,7 @@ export const getStorageReport = async (
       status: "ok",
       report: {
         usage,
+        files,
         products: perProduct.sort((a, b) => b.bytes - a.bytes),
         orphans,
         orphanBytes: orphans.reduce((sum, file) => sum + file.bytes, 0),

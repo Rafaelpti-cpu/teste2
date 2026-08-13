@@ -3,9 +3,11 @@ import Link from "next/link";
 import { isAdminLocked, requireAdmin } from "@/lib/admin/auth";
 import { getCatalogBackend, getCatalogStore } from "@/lib/catalog";
 import { getStorageReport, type StorageReport } from "@/lib/catalog/storage";
+import { SHRINK_THRESHOLD_BYTES } from "@/lib/catalog/shrink-stored";
 
 import { AdminShell } from "./admin-shell";
 import { StorageCleanup } from "./storage-cleanup";
+import { StorageShrink } from "./storage-shrink";
 import { StorageMeter } from "./storage-meter";
 
 const formatSize = (bytes: number) => {
@@ -77,7 +79,9 @@ const Report = ({
 }: {
   report: StorageReport;
 }) => {
-  const { usage, products, orphans, orphanBytes } = report;
+  const { usage, products, orphans, orphanBytes, files } = report;
+  const oversized = files.filter((f) => f.bytes > SHRINK_THRESHOLD_BYTES);
+  const oversizedBytes = oversized.reduce((sum, f) => sum + f.bytes, 0);
   const freeBytes = Math.max(0, usage.limitBytes - usage.usedBytes);
   const averageBytes =
     usage.files > 0 ? usage.usedBytes / usage.files : 0;
@@ -111,6 +115,28 @@ const Report = ({
           />
         </dl>
       </section>
+
+      {oversized.length > 0 && (
+        <section aria-labelledby="pesadas" className="flex flex-col gap-4">
+          <h2 id="pesadas" className="font-display text-2xl font-light">
+            Fotos pesadas
+          </h2>
+          <p className="max-w-[60ch] text-sm text-foreground-muted">
+            {oversized.length}{" "}
+            {oversized.length === 1
+              ? "foto está grande demais e ocupa"
+              : "fotos estão grandes demais e ocupam"}{" "}
+            {formatSize(oversizedBytes)}. Elas subiram no tamanho original do
+            celular, e o site entrega para a cliente exatamente esse tamanho —
+            é o que deixa a página lenta. Encolher não muda nada no visual: a
+            foto continua nítida, só para de carregar megabytes à toa.
+          </p>
+          <StorageShrink
+            count={oversized.length}
+            label={formatSize(oversizedBytes)}
+          />
+        </section>
+      )}
 
       <section aria-labelledby="soltas" className="flex flex-col gap-4">
         <h2 id="soltas" className="font-display text-2xl font-light">
