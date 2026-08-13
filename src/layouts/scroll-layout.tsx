@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Lenis from "lenis";
 import { usePathname } from "next/navigation";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import { scrollTo } from "@/utils/scroll-to";
@@ -31,30 +30,33 @@ function ScrollController() {
   const pathname = usePathname();
   const savedPathname = useRef("");
 
+  /*
+    Smooth scroll is **off**, deliberately.
+
+    Lenis was here from the starter, and it cost more than it bought. On a phone
+    it was pure waste: `syncTouch` was never enabled, so touch scrolling was
+    already native — the library did nothing but run a `requestAnimationFrame`
+    loop sixty times a second, forever, on the same thread that paints. On a
+    desktop `smoothWheel` intercepted the wheel and animated every scroll in
+    JavaScript, which is exactly the "site is sluggish to move around" the shop
+    reported, on both devices.
+
+    Native scrolling runs on the compositor. It cannot drop a frame because the
+    main thread is busy, which is the whole problem a page with a WebGL scene,
+    spring reveals and ~950 KB of JavaScript actually has.
+
+    Nothing else depended on the instance: `scrollTo` already uses
+    `window.scrollTo`, and the dialog's background lock is `enableNativeScroll`
+    below, which is plain CSS. The store and this component stay so that
+    `start()`/`stop()` keep working and so turning it back on is one block.
+
+    The site keeps its motion — the reveal-on-scroll springs are untouched.
+    What is gone is the layer between the finger and the page.
+  */
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.scrollTo(0, 0);
-    const lenis = new Lenis({
-      smoothWheel: true,
-      // syncTouch: true,
-    });
-    (window as typeof window & { lenis: Lenis }).lenis = lenis;
-    setLenis(lenis);
-
-    let rafId = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    };
-    rafId = requestAnimationFrame(raf);
-
-    return () => {
-      // Cancel the loop before destroying Lenis — otherwise it keeps calling
-      // `raf` on a destroyed instance after unmount/HMR.
-      cancelAnimationFrame(rafId);
-      lenis.destroy();
-      setLenis(null);
-    };
+    setLenis(null);
   }, [setLenis]);
 
   useEffect(() => {

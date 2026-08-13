@@ -47,6 +47,15 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
         */}
         <Link
           href={`/produto/${product.slug}`}
+          /*
+            No prefetch. `<Link>` fetches every destination that scrolls into
+            view, and here that is eight product pages the click will not use —
+            eight server renders, eight catalogue reads and eight payloads to
+            parse, to prepare a navigation that only happens on a middle click.
+            The address is here for crawlers and for "open in new tab"; the
+            plain tap opens the dialog and never leaves the page.
+          */
+          prefetch={false}
           onClick={(event) => {
             if (
               event.metaKey ||
