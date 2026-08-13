@@ -43,6 +43,21 @@ layout, not desktop convenience:
 - **The save bar is sticky.** The form is long; scrolling back to the bottom
   after every edit is the friction that stops a catalogue from being kept
   current.
+- **Photos are shrunk on the phone, before upload.** `shrinkForUpload()` decodes
+  the file, redraws it at 1600 px on the long edge and re-encodes as WebP at
+  0.82. Measured in-browser on a synthetic 4032×3024 phone photo: 6.83 MB →
+  460 KB, and that source was pure noise, so real garments land lower. It
+  returns the original untouched when the file is already under 300 KB, when
+  the browser cannot decode it, or when the result comes out **larger** — and it
+  never throws, because the shop's job is to sell the piece, not to satisfy a
+  resizer. `imageOrientation: "from-image"` is not optional: a canvas discards
+  EXIF rotation, so without it a photo taken sideways uploads sideways.
+
+  This is load-bearing for three separate reasons, and it is worth knowing all
+  three before anyone "simplifies" it away: uploads over shop wifi finish
+  instead of being abandoned; Supabase's free GB goes from ~285 photos to
+  ~5 000; and **Vercel's image optimiser is off**, so whatever is uploaded is
+  byte-for-byte what a customer downloads.
 - **Photos come first in the form.** The shop adds pieces from a phone standing
   next to the rail: the photo is both the first thing they have and the one
   field that gates saving. Asking for a name above it asks them to describe

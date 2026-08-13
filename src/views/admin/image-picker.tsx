@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { uploadImage } from "@/lib/admin/client";
+import { shrinkForUpload } from "@/lib/admin/resize-image";
 
 export interface ImagePickerProps {
   value: string[];
@@ -48,7 +49,9 @@ export const ImagePicker = ({ value, onChange }: ImagePickerProps) => {
 
     for (const file of Array.from(files)) {
       try {
-        uploaded.push(await uploadImage(file));
+        // Shrunk here, on the phone, before a single byte goes out — see
+        // `shrinkForUpload` for why this is load-bearing and not a nicety.
+        uploaded.push(await uploadImage(await shrinkForUpload(file)));
       } catch (cause) {
         failed.push(file.name);
         if (!reason && cause instanceof Error && cause.message) {
@@ -197,7 +200,9 @@ export const ImagePicker = ({ value, onChange }: ImagePickerProps) => {
 
       <p className="text-xs text-foreground-muted">
         Dá para escolher várias de uma vez. JPG, PNG, WebP ou AVIF, até 8 MB
-        cada. No site elas aparecem no formato 3:4 (em pé).
+        cada — o celular já encolhe a foto antes de enviar, então mesmo com
+        sinal fraco costuma ser rápido. No site elas aparecem no formato 3:4
+        (em pé), então fotografe a peça <strong>em pé</strong>.
       </p>
 
       {error && (
