@@ -24,12 +24,21 @@ import { invalidateStorageUsage, listStorageFiles } from "@/lib/catalog/storage"
  * 📖 Docs: obsidian/backend/catalog-store.md
  */
 
-/** Same geometry as the browser-side resizer, so both produce one look. */
-const MAX_EDGE = 1600;
+/**
+ * Same geometry as the browser-side resizer, so both produce one look.
+ * See `resize-image.ts` for why 1100 and not a rounder number.
+ */
+const MAX_EDGE = 1100;
 const QUALITY = 82;
 
-/** Below this a photo is already small enough to leave alone. */
-export const SHRINK_THRESHOLD_BYTES = 400 * 1024;
+/**
+ * Below this a photo is left at its current size.
+ *
+ * 150 KB, down from 400. At 1100 px a garment photo lands around 90–140 KB, so
+ * the old threshold would have declared every already-shrunk photo finished and
+ * skipped the re-pass that this size change needs.
+ */
+export const SHRINK_THRESHOLD_BYTES = 150 * 1024;
 
 /** A year. Names are unique per upload, so the content never changes under one. */
 export const CACHE_CONTROL = "max-age=31536000";
@@ -135,23 +144,38 @@ export const shrinkStoredPhotos = async (): Promise<ShrinkResult> => {
       let type = originalType;
 
       if (file.oversized) {
-        const shrunk = await sharp(original)
-          // Honours EXIF rotation, exactly as the browser resizer does.
-          .rotate()
-          .resize({
-            width: MAX_EDGE,
-            height: MAX_EDGE,
-            fit: "inside",
-            withoutEnlargement: true,
-          })
-          .webp({ quality: QUALITY })
-          .toBuffer();
+        /*
+          Decided on pixels, not bytes.
 
-        // A photo that grows keeps its original bytes — some are already well
-        // compressed — but still gets rewritten, for the cache header.
-        if (shrunk.byteLength < original.byteLength) {
-          body = shrunk;
-          type = "image/webp";
+          Byte size alone would re-encode a photo that is already the right
+          dimensions, and WebP is lossy — running this button twice would
+          quietly degrade every image, a third time more so. Measuring the
+          actual width makes the job idempotent: once a photo is within
+          MAX_EDGE it is never re-compressed again, only rewritten if its cache
+          header still needs fixing.
+        */
+        const { width = 0, height = 0 } = await sharp(original).metadata();
+        const tooBig = Math.max(width, height) > MAX_EDGE;
+
+        if (tooBig) {
+          const shrunk = await sharp(original)
+            // Honours EXIF rotation, exactly as the browser resizer does.
+            .rotate()
+            .resize({
+              width: MAX_EDGE,
+              height: MAX_EDGE,
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .webp({ quality: QUALITY })
+            .toBuffer();
+
+          // A photo that grows keeps its original bytes — some are already well
+          // compressed — but still gets rewritten, for the cache header.
+          if (shrunk.byteLength < original.byteLength) {
+            body = shrunk;
+            type = "image/webp";
+          }
         }
       }
 

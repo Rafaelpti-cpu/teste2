@@ -19,8 +19,24 @@
  * 📖 Docs: obsidian/backend/admin-area.md
  */
 
-/** Longest edge kept, in pixels. */
-const MAX_EDGE = 1600;
+/**
+ * Longest edge kept, in pixels.
+ *
+ * 1100, measured against where a photo actually appears rather than picked as
+ * a round number. The largest slot on the site is the hero cover at 640 CSS px,
+ * and the product gallery is 512 — on a 2× screen those want 1280 and 1024.
+ * The grid card, which is most of what a customer downloads, is 190 CSS px on
+ * a phone.
+ *
+ * This was 1600 and Lighthouse put the cost at 2 697 KiB of over-sized images
+ * on a 3 304 KiB page: with Vercel's optimiser off there is no per-slot
+ * resizing, so every card downloaded a photo eight times wider than the space
+ * it filled. LCP was 4.5 s.
+ *
+ * Going lower would start to show on the gallery, which is the one place a
+ * customer looks closely at fabric before asking about it.
+ */
+const MAX_EDGE = 1100;
 /** WebP quality. 0.82 is where the seams stop being visible on fabric. */
 const QUALITY = 0.82;
 
