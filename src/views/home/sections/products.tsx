@@ -41,6 +41,49 @@ const PAGE_SIZE = 8;
  * cheaper — not to start more of them at once.
  */
 
+/**
+ * Deals the catalogue out one category at a time, newest first within each.
+ *
+ * The grid was plain newest-first, which is right for a section called
+ * "Novidades" and wrong for the first thing a customer sees. The shop adds
+ * pieces in batches — a morning of children's outfits, an afternoon of shoes —
+ * so the front of the grid was whatever was photographed last. With 42 women's
+ * pieces, 31 pairs of shoes and 7 children's items in the catalogue, the
+ * opening screen was eight children's outfits, and it read as a shop that only
+ * sells for children.
+ *
+ * Round-robin fixes that without giving up freshness: the first row is still
+ * the newest thing in each section, so a piece added this morning is on screen
+ * within four cards no matter which section it belongs to.
+ *
+ * Only for "Todas". Inside a category, newest-first is exactly what someone
+ * browsing that category wants.
+ */
+const interleaveByCategory = (
+  products: Product[],
+  categories: ProductCategory[],
+): Product[] => {
+  const queues = categories.map((category) =>
+    products.filter((product) => product.category === category),
+  );
+
+  const out: Product[] = [];
+  for (let round = 0; out.length < products.length; round += 1) {
+    let placedAny = false;
+    for (const queue of queues) {
+      const next = queue[round];
+      if (next) {
+        out.push(next);
+        placedAny = true;
+      }
+    }
+    // Every queue is exhausted — without this, a category list that does not
+    // cover every product (it always does today) would spin forever.
+    if (!placedAny) break;
+  }
+  return out;
+};
+
 export interface ProductsProps {
   copy: { eyebrow: string; title: string; ctaLabel: string };
   products: Product[];
@@ -75,7 +118,7 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
   const available = categoriesOf(products);
   const matching = active
     ? products.filter((product) => product.category === active)
-    : products;
+    : interleaveByCategory(products, available);
   const shown = matching.slice(0, visible);
   const remaining = matching.length - shown.length;
 
