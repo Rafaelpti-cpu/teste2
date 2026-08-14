@@ -36,26 +36,41 @@ export const CookieBanner = () => {
           opacity: style.opacity,
           transform: style.y.to((v) => `translateY(${v}px)`),
         }}
-        className="fixed bottom-4 left-4 right-4 z-50 flex flex-col gap-3 rounded-xl border border-foreground/10 bg-background/95 p-5 font-sans text-foreground shadow-2xl backdrop-blur-xl sm:bottom-12 sm:left-auto sm:right-12 sm:w-[420px] sm:p-6"
+        /*
+          A slim bar, not a card — and the reason is measured, not aesthetic.
+
+          Lighthouse named this banner's paragraph as the Largest Contentful
+          Paint element, at 5.8 s across every run. It was the biggest block of
+          text on a phone screen, and it is `ssr: false` behind a dynamic
+          import, so it painted only once the JavaScript chunk had arrived: a
+          990 ms "element render delay" on top of everything else.
+
+          Nothing else on the page paints late. FCP was 0.9–1.0 s in all four
+          measurements. The site was being scored on its cookie notice.
+
+          Two lines instead of six puts this below the hero heading in area, so
+          the largest paint becomes text that is in the HTML from the first
+          byte. The detail did not disappear — "Escolher" still opens the full
+          per-category modal, and the privacy policy is one tap away, which is
+          where that text belongs anyway.
+        */
+        className="fixed right-4 bottom-4 left-4 z-50 flex flex-col gap-3 rounded-xl border border-foreground/10 bg-background/95 p-4 font-sans text-foreground shadow-2xl backdrop-blur-xl sm:right-12 sm:bottom-12 sm:left-auto sm:w-[420px] sm:p-5"
       >
-        <h2 className="text-base font-medium leading-snug sm:text-lg">
-          Este site usa cookies
-        </h2>
-        <p className="text-sm leading-relaxed text-foreground/70">
-          Usamos cookies para o site funcionar e para entender o que as pessoas
-          procuram aqui. Você pode aceitar tudo, recusar o que não é essencial ou
-          escolher categoria por categoria. Veja a nossa{" "}
+        <h2 className="sr-only">Este site usa cookies</h2>
+        <p className="text-sm leading-snug text-foreground/70">
+          Usamos cookies para o site funcionar e para saber o que as pessoas
+          procuram.{" "}
           <Link
             href="/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-2 hover:text-foreground/70"
           >
-            política de privacidade
+            Política de privacidade
           </Link>
           .
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <CookieButton onClick={acceptAll}>Aceitar tudo</CookieButton>
           <CookieButton variant="secondary" onClick={rejectAll}>
             Recusar tudo

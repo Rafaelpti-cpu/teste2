@@ -1,7 +1,5 @@
 import { ButtonLink } from "@/components/ui/button-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { RevealHeading } from "@/components/ui/reveal-heading";
-import { RevealText } from "@/components/ui/reveal-text";
 import type { HomeContent } from "@/data/home";
 
 import { HeroPhoto } from "./hero-photo";
@@ -26,20 +24,33 @@ export const Hero = ({ content, withScene }: HeroProps) => (
       <div className="flex flex-col items-start gap-5 md:gap-7">
         <Eyebrow>{content.eyebrow}</Eyebrow>
 
-        <RevealHeading
+        {/*
+          Plain text, not a reveal — and this is the fix for the site "feeling
+          slow" rather than a style preference.
+
+          Lighthouse put Largest Contentful Paint at 4.5–5.8 s on every run
+          while First Contentful Paint was 0.9–1.0 s. Something big was painting
+          four seconds after the rest. It was this: `RevealHeading` renders each
+          letter in a span at `opacity: 0` and animates them in, so the biggest
+          text on the page — the shop's headline — did not exist visually until
+          ~950 KB of JavaScript had downloaded and hydrated. Only an `sr-only`
+          copy was in the HTML, which screen readers get and eyes do not.
+
+          These two are now ordinary elements, painted with the first byte.
+          Every other heading on the page keeps its reveal: they are below the
+          fold, so nobody waits on them, and the motion the shop asked for
+          survives where it costs nothing.
+        */}
+        <h1
           id="hero-title"
-          tag="h1"
           className="max-w-[12ch] font-display text-5xl font-light tracking-tight text-foreground md:text-7xl"
         >
           {content.title.join(" ")}
-        </RevealHeading>
+        </h1>
 
-        <RevealText
-          className="max-w-[46ch] text-base text-foreground-muted md:text-lg"
-          delayIn={220}
-        >
+        <p className="max-w-[46ch] text-base text-foreground-muted md:text-lg">
           {content.description}
-        </RevealText>
+        </p>
 
         <div className="flex flex-wrap items-center gap-3">
           <ButtonLink href={content.primaryCta.href}>
