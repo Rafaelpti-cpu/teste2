@@ -1,6 +1,7 @@
 import sharp from "sharp";
 
-import { getSupabaseConfig } from "@/lib/catalog/supabase-store";
+import { getSupabaseConfig, saveCardRendition } from "@/lib/catalog/supabase-store";
+import { cardObjectName, isCardObject } from "@/lib/catalog/card-image";
 import { invalidateStorageUsage, listStorageFiles } from "@/lib/catalog/storage";
 
 /**
@@ -90,22 +91,41 @@ export const filesNeedingWork = async () => {
   const config = getSupabaseConfig();
   if (!config) return [];
 
-  const files = await listStorageFiles();
-  const out: { name: string; bytes: number; oversized: boolean }[] = [];
+  const all = await listStorageFiles();
+  // Card renditions are generated, never uploaded; they are the *result* of
+  // this job, not its input.
+  const photos = all.filter((file) => !isCardObject(file.name));
+  const existingCards = new Set(
+    all.filter((file) => isCardObject(file.name)).map((file) => file.name),
+  );
 
-  for (let i = 0; i < files.length; i += PROBE_CONCURRENCY) {
-    const slice = files.slice(i, i + PROBE_CONCURRENCY);
+  const out: {
+    name: string;
+    bytes: number;
+    oversized: boolean;
+    missingCard: boolean;
+  }[] = [];
+
+  for (let i = 0; i < photos.length; i += PROBE_CONCURRENCY) {
+    const slice = photos.slice(i, i + PROBE_CONCURRENCY);
     const checks = await Promise.all(
       slice.map(async (file) => {
         const oversized = file.bytes > SHRINK_THRESHOLD_BYTES;
-        if (oversized) return { file, oversized, needed: true };
+        const missingCard = !existingCards.has(cardObjectName(file.name));
+        if (oversized || missingCard) {
+          return { file, oversized, missingCard, needed: true };
+        }
         const url = `${config.url}/storage/v1/object/public/${config.bucket}/${encodeURIComponent(file.name)}`;
-        return { file, oversized, needed: await needsCacheFix(url) };
+        return { file, oversized, missingCard, needed: await needsCacheFix(url) };
       }),
     );
     for (const check of checks) {
       if (check.needed) {
-        out.push({ ...check.file, oversized: check.oversized });
+        out.push({
+          ...check.file,
+          oversized: check.oversized,
+          missingCard: check.missingCard,
+        });
       }
     }
   }
@@ -191,6 +211,12 @@ export const shrinkStoredPhotos = async (): Promise<ShrinkResult> => {
       });
       if (!upload.ok) {
         throw new Error(`upload ${upload.status} ${await upload.text().catch(() => "")}`);
+      }
+
+      // The grid's small copy, from the bytes we now hold. Written after the
+      // main object so a failure here never leaves the photo itself unwritten.
+      if (file.missingCard || body !== original) {
+        await saveCardRendition(body, file.name);
       }
 
       freedBytes += original.byteLength - body.byteLength;

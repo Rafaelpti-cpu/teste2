@@ -14,7 +14,10 @@
  * 📖 Docs: obsidian/backend/catalog-store.md
  */
 
+import sharp from "sharp";
+
 import { catalogSeed } from "@/data/catalog-seed";
+import { CARD_EDGE, cardObjectName } from "@/lib/catalog/card-image";
 import { ApiError } from "@/lib/api";
 import { slugify } from "@/lib/catalog/schema";
 import type { CatalogStore } from "@/lib/catalog/store";
@@ -217,6 +220,46 @@ const uniqueSlug = async (base: string, ignoreId?: string) => {
   return `${base}-${suffix}`;
 };
 
+/**
+ * Writes the grid-sized copy of a just-uploaded photo.
+ *
+ * Shared with the backfill in `shrink-stored.ts`, which is why it lives here
+ * next to the credentials rather than in the route handler.
+ */
+export const saveCardRendition = async (
+  bytes: ArrayBuffer | Buffer,
+  objectPath: string,
+): Promise<void> => {
+  const { url, serviceKey, bucket } = config();
+  const source = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+
+  const small = await sharp(source)
+    .rotate()
+    .resize({ width: CARD_EDGE, withoutEnlargement: true })
+    .webp({ quality: 78 })
+    .toBuffer();
+
+  const response = await fetch(
+    `${url}/storage/v1/object/${bucket}/${cardObjectName(objectPath)}`,
+    {
+      method: "PUT",
+      headers: {
+        apikey: serviceKey,
+        authorization: `Bearer ${serviceKey}`,
+        "content-type": "image/webp",
+        "cache-control": "max-age=31536000",
+        "x-upsert": "true",
+      },
+      body: new Uint8Array(small),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `card ${response.status} ${(await response.text().catch(() => "")).slice(0, 120)}`,
+    );
+  }
+};
+
 const EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "avif", "gif"]);
 const MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -353,6 +396,19 @@ export const supabaseCatalogStore: CatalogStore = {
         `A pasta "${bucket}" recusou: HTTP ${response.status} ${detail || ""}`.trim(),
       );
     }
+
+    /*
+      The grid's small rendition, alongside the full one.
+
+      Generated here rather than in the browser because the browser would have
+      to upload twice over the shop's connection, and because this must also
+      work for the backfill of photos that predate it. A failure is swallowed:
+      the card falls back to the full photo, which is exactly today's
+      behaviour, and a missing thumbnail must never cost the shop an upload.
+    */
+    await saveCardRendition(bytes, objectPath).catch((error) => {
+      console.error("[catalog/supabase] card rendition:", error);
+    });
 
     // Public bucket — the URL is stable and needs no signing.
     return `${url}/storage/v1/object/public/${bucket}/${objectPath}`;

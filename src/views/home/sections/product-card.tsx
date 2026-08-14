@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Hover } from "@/components/animation/springs/hover";
+import { cardImageUrl } from "@/lib/catalog/card-image";
 import { coverImage, hoverImage, type Product } from "@/types/catalog";
 import { formatInstalments, formatPrice } from "@/utils/format";
 
@@ -38,9 +39,20 @@ const useHasHover = () => {
 };
 
 export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
-  const cover = coverImage(product);
+  const full = coverImage(product);
   const hasHover = useHasHover();
   const second = hasHover ? hoverImage(product) : null;
+
+  /*
+    The grid asks for the small rendition and falls back to the full photo.
+
+    Every upload writes both, and the maintenance job backfills the ones that
+    predate it — but "predate it" is a real state that exists on the live site
+    right now, and a 404 in an `<img>` is a broken card. The fallback makes the
+    switch safe to deploy before the backfill has run: worst case a card is as
+    heavy as it is today, which is exactly where we started.
+  */
+  const [cover, setCover] = useState(() => cardImageUrl(full) ?? full);
 
   return (
     /*
@@ -119,6 +131,7 @@ export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
               fill
               sizes="(max-width: 768px) 50vw, 18rem"
               className="object-cover"
+              onError={() => setCover(full)}
               /*
                 Lazy, with no `priority` and no `eager`. Both were tried on the
                 first four covers and both made the site worse — 79 → 70 with

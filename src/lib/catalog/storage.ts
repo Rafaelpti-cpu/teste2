@@ -12,6 +12,7 @@
  */
 
 import { getSupabaseConfig } from "@/lib/catalog/supabase-store";
+import { isCardObject, parentObjectName } from "@/lib/catalog/card-image";
 
 export interface StorageUsage {
   usedBytes: number;
@@ -295,7 +296,19 @@ export const getStorageReport = async (
       }
     }
 
-    const orphans = files.filter((file) => !used.has(file.name));
+    /*
+      A card rendition belongs to its photo, not to nobody.
+
+      No product record points at `<name>.card.webp` — the grid derives that
+      address from the full one. Without this line the sweep would have read
+      every generated thumbnail as waste and offered to delete the whole set,
+      one button press away from undoing the work that made the grid fast.
+    */
+    const orphans = files.filter((file) => {
+      if (used.has(file.name)) return false;
+      if (isCardObject(file.name)) return !used.has(parentObjectName(file.name));
+      return true;
+    });
 
     return {
       status: "ok",
