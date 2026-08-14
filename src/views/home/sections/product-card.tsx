@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { useEffect, useState } from "react";
+
 import { Hover } from "@/components/animation/springs/hover";
 import { coverImage, hoverImage, type Product } from "@/types/catalog";
 import { formatInstalments, formatPrice } from "@/utils/format";
@@ -11,22 +13,34 @@ export interface ProductCardProps {
   product: Product;
   /** Opens the detail dialog. */
   onOpen: (product: Product) => void;
-  /** Position in the grid — drives the reveal stagger within each row. */
-  index: number;
 }
 
 /**
- * Above this position a photo is fetched eagerly instead of lazily.
+ * Does this device actually hover?
  *
- * Four covers the first row on a phone and most of the first on a desktop —
- * the pieces someone sees before scrolling, which should not wait for the
- * lazy-loading pass.
+ * The second photo is an alternate angle revealed on hover. A phone has no
+ * hover, so on a phone it is a full-size image downloaded, decoded and never
+ * once seen — Lighthouse costed the set at ~1.5 MB, which was nearly all of
+ * the "improve image delivery" figure.
+ *
+ * A CSS media query cannot help: an `<img>` in the DOM is fetched whether or
+ * not anything displays it. The element has to not exist, which means asking
+ * at runtime. It resolves after mount, so a phone renders and never asks
+ * again, and a desktop adds the image a beat later — which is fine, since
+ * nobody hovers within the first frame.
  */
-const EAGER_BEFORE = 4;
+const useHasHover = () => {
+  const [hasHover, setHasHover] = useState(false);
+  useEffect(() => {
+    setHasHover(window.matchMedia("(hover: hover)").matches);
+  }, []);
+  return hasHover;
+};
 
-export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
+export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
   const cover = coverImage(product);
-  const second = hoverImage(product);
+  const hasHover = useHasHover();
+  const second = hasHover ? hoverImage(product) : null;
 
   return (
     /*
@@ -105,9 +119,18 @@ export const ProductCard = ({ product, onOpen, index }: ProductCardProps) => {
               fill
               sizes="(max-width: 768px) 50vw, 18rem"
               className="object-cover"
-              // The first row is what a customer sees before scrolling; leaving
-              // it to the lazy pass is why the grid appeared to fill in slowly.
-              priority={index < EAGER_BEFORE}
+              /*
+                No `priority` here, and that is a correction of my own change.
+
+                Marking the first four covers eager put six image preloads in
+                the head, all competing for a throttled 4G pipe with the hero
+                photo — which is the LCP element. Lighthouse measured the cost:
+                LCP went from 4.5 s to 5.7 s when these were added. A preload
+                that is not the largest paint delays the one that is.
+
+                One image gets priority on this page: the hero. Everything else
+                loads lazily, which is what lazy loading is for.
+              */
             />
             {/* The shop's own alternate angle. A cross-fade is opacity only,
                 which is the one case CSS owns (ADR-0014) — no spring needed. */}

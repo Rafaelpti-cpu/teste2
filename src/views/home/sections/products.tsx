@@ -131,7 +131,6 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
             key={`${active ?? "todas"}-${product.id}`}
             product={product}
             onOpen={setOpened}
-            index={index}
           />
         ))}
       </ul>
