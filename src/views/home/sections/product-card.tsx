@@ -13,11 +13,6 @@ export interface ProductCardProps {
   product: Product;
   /** Opens the detail dialog. */
   onOpen: (product: Product) => void;
-  /**
-   * Start this photo's download with the page instead of waiting for it to
-   * near the viewport. Set on the first rows — see `EAGER_ROWS` in the grid.
-   */
-  eager?: boolean;
 }
 
 /**
@@ -42,7 +37,7 @@ const useHasHover = () => {
   return hasHover;
 };
 
-export const ProductCard = ({ product, onOpen, eager = false }: ProductCardProps) => {
+export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
   const cover = coverImage(product);
   const hasHover = useHasHover();
   const second = hasHover ? hoverImage(product) : null;
@@ -125,19 +120,13 @@ export const ProductCard = ({ product, onOpen, eager = false }: ProductCardProps
               sizes="(max-width: 768px) 50vw, 18rem"
               className="object-cover"
               /*
-                `eager`, never `priority` — the difference is the whole fix.
-
-                `priority` adds a `<link rel=preload>`, which jumps the queue
-                and competes with the hero for a throttled 4G pipe. Doing that
-                for four covers took LCP from 4.5 s to 5.7 s, measured.
-
-                `loading="eager"` only means "do not wait for the viewport".
-                The request starts with the page at ordinary priority, so the
-                first rows are already arriving instead of trickling in one by
-                one as the customer scrolls — which is what "os produtos vão
-                de arrasto" described — and nothing overtakes the hero.
+                Lazy, with no `priority` and no `eager`. Both were tried on the
+                first four covers and both made the site worse — 79 → 70 with
+                `priority`, 79 → 56 with `eager`. The table of measurements is
+                in `products.tsx`; the short version is that anything which
+                starts a cover early puts another download in front of the
+                largest paint on a throttled connection.
               */
-              loading={eager ? "eager" : "lazy"}
             />
             {/* The shop's own alternate angle. A cross-fade is opacity only,
                 which is the one case CSS owns (ADR-0014) — no spring needed. */}

@@ -21,19 +21,25 @@ import { ProductDialog } from "./product-dialog";
 const PAGE_SIZE = 8;
 
 /**
- * How many covers start downloading with the page instead of on approach.
+ * Do not make product covers load eagerly. It has been measured twice.
  *
- * Four is two rows on a phone, where the grid is two columns — the pieces a
- * customer meets right after the hero. Native lazy loading only starts a
- * request when the image nears the viewport, which is correct for a long grid
- * and wrong for its top: the shop watched "the first two appear at once and
- * the rest come dragging in".
+ * The grid's covers stay lazy, and the reason is empirical rather than
+ * theoretical. Two attempts to start them early, two regressions:
  *
- * These are `loading="eager"`, **not** `priority`. Priority would preload them
- * ahead of the hero and cost LCP — that experiment is written up in
- * `product-card.tsx`.
+ * | Covers started early | How | Score | LCP |
+ * |---|---|---|---|
+ * | none | — | **79** | 4.9 s |
+ * | 4 | `priority` (preload, high) | 70 | 5.7 s |
+ * | 4 | `loading="eager"` (preload, default) | **56** | — |
+ *
+ * The mechanism is the same both times and only the severity changed: every
+ * cover started early is another download competing for a throttled 4G pipe
+ * with whatever the largest paint is. `eager` was supposed to be the gentle
+ * version and turned out worse.
+ *
+ * "The pieces come in dragging" is real, and the answer is to make each photo
+ * cheaper — not to start more of them at once.
  */
-const EAGER_COUNT = 4;
 
 export interface ProductsProps {
   copy: { eyebrow: string; title: string; ctaLabel: string };
@@ -139,14 +145,13 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
       </div>
 
       <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:mt-12 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
-        {shown.map((product, index) => (
+        {shown.map((product) => (
           <ProductCard
             // Keyed by filter too, so switching category replays the reveal
             // instead of leaving recycled cards at their finished state.
             key={`${active ?? "todas"}-${product.id}`}
             product={product}
             onOpen={setOpened}
-            eager={index < EAGER_COUNT}
           />
         ))}
       </ul>
