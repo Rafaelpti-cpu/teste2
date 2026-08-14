@@ -54,14 +54,44 @@ export const parentObjectName = (name: string): string =>
   name.replace(`${CARD_SUFFIX}.`, ".").replace(new RegExp(`${CARD_SUFFIX}$`), "");
 
 /**
+ * Photos that ship with the site rather than living in storage.
+ *
+ * These came from the old site and are 900×1200 at 60–240 KB apiece. They were
+ * assumed small enough to leave alone, which was wrong: with Vercel's optimiser
+ * off they are downloaded whole into a 190 CSS px card, and they are most of
+ * the catalogue. A `.card.webp` sits next to each cover and hover photo,
+ * generated at build-authoring time and committed — the same naming rule as
+ * storage, so the grid has one rule rather than two.
+ *
+ * Only `1.*` and `2.*` have one. Nothing else is ever shown small: the rest of
+ * a piece's photos appear only in the dialog's gallery, at full size.
+ */
+const SEEDED_PREFIX = "/assets/produtos/";
+const SEEDED_WITH_CARD = /\/([12])\.[a-z0-9]+$/i;
+
+/**
  * The small rendition's URL, or `null` when there cannot be one.
  *
- * `null` for the seeded photos under `public/`, which are already small and
- * are served by the site rather than from storage.
+ * `null` means "use the full photo", which every caller must handle — a piece
+ * uploaded before the renditions existed still has none until the maintenance
+ * job reaches it.
  */
 export const cardImageUrl = (imageUrl: string): string | null => {
-  if (!imageUrl.includes("/storage/v1/object/public/")) return null;
+  const stored = imageUrl.includes("/storage/v1/object/public/");
+  const seeded = imageUrl.startsWith(SEEDED_PREFIX);
+
+  if (seeded && !SEEDED_WITH_CARD.test(imageUrl)) return null;
+  if (!stored && !seeded) return null;
+
   const slash = imageUrl.lastIndexOf("/");
   if (slash < 0) return null;
-  return `${imageUrl.slice(0, slash + 1)}${cardObjectName(imageUrl.slice(slash + 1))}`;
+
+  const name = imageUrl.slice(slash + 1);
+  // A committed rendition is always WebP; a stored one keeps its extension so
+  // the name matches what the job wrote.
+  const small = seeded
+    ? `${name.replace(/\.[^.]+$/, "")}.card.webp`
+    : cardObjectName(name);
+
+  return `${imageUrl.slice(0, slash + 1)}${small}`;
 };

@@ -41,7 +41,9 @@ const useHasHover = () => {
 export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
   const full = coverImage(product);
   const hasHover = useHasHover();
-  const second = hasHover ? hoverImage(product) : null;
+  // The hover photo fills the same card, so it wants the same small rendition.
+  const secondFull = hasHover ? hoverImage(product) : null;
+  const second = secondFull ? (cardImageUrl(secondFull) ?? secondFull) : null;
 
   /*
     The grid asks for the small rendition and falls back to the full photo.
