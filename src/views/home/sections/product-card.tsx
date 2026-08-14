@@ -13,6 +13,11 @@ export interface ProductCardProps {
   product: Product;
   /** Opens the detail dialog. */
   onOpen: (product: Product) => void;
+  /**
+   * Start this photo's download with the page instead of waiting for it to
+   * near the viewport. Set on the first rows — see `EAGER_ROWS` in the grid.
+   */
+  eager?: boolean;
 }
 
 /**
@@ -37,7 +42,7 @@ const useHasHover = () => {
   return hasHover;
 };
 
-export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
+export const ProductCard = ({ product, onOpen, eager = false }: ProductCardProps) => {
   const cover = coverImage(product);
   const hasHover = useHasHover();
   const second = hasHover ? hoverImage(product) : null;
@@ -120,17 +125,19 @@ export const ProductCard = ({ product, onOpen }: ProductCardProps) => {
               sizes="(max-width: 768px) 50vw, 18rem"
               className="object-cover"
               /*
-                No `priority` here, and that is a correction of my own change.
+                `eager`, never `priority` — the difference is the whole fix.
 
-                Marking the first four covers eager put six image preloads in
-                the head, all competing for a throttled 4G pipe with the hero
-                photo — which is the LCP element. Lighthouse measured the cost:
-                LCP went from 4.5 s to 5.7 s when these were added. A preload
-                that is not the largest paint delays the one that is.
+                `priority` adds a `<link rel=preload>`, which jumps the queue
+                and competes with the hero for a throttled 4G pipe. Doing that
+                for four covers took LCP from 4.5 s to 5.7 s, measured.
 
-                One image gets priority on this page: the hero. Everything else
-                loads lazily, which is what lazy loading is for.
+                `loading="eager"` only means "do not wait for the viewport".
+                The request starts with the page at ordinary priority, so the
+                first rows are already arriving instead of trickling in one by
+                one as the customer scrolls — which is what "os produtos vão
+                de arrasto" described — and nothing overtakes the hero.
               */
+              loading={eager ? "eager" : "lazy"}
             />
             {/* The shop's own alternate angle. A cross-fade is opacity only,
                 which is the one case CSS owns (ADR-0014) — no spring needed. */}

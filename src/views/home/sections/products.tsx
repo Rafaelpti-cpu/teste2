@@ -20,6 +20,21 @@ import { ProductDialog } from "./product-dialog";
  */
 const PAGE_SIZE = 8;
 
+/**
+ * How many covers start downloading with the page instead of on approach.
+ *
+ * Four is two rows on a phone, where the grid is two columns — the pieces a
+ * customer meets right after the hero. Native lazy loading only starts a
+ * request when the image nears the viewport, which is correct for a long grid
+ * and wrong for its top: the shop watched "the first two appear at once and
+ * the rest come dragging in".
+ *
+ * These are `loading="eager"`, **not** `priority`. Priority would preload them
+ * ahead of the hero and cost LCP — that experiment is written up in
+ * `product-card.tsx`.
+ */
+const EAGER_COUNT = 4;
+
 export interface ProductsProps {
   copy: { eyebrow: string; title: string; ctaLabel: string };
   products: Product[];
@@ -131,6 +146,7 @@ export const Products = ({ copy, products, allHref }: ProductsProps) => {
             key={`${active ?? "todas"}-${product.id}`}
             product={product}
             onOpen={setOpened}
+            eager={index < EAGER_COUNT}
           />
         ))}
       </ul>
