@@ -37,9 +37,23 @@ export const ProductDetails = ({ product, tag = "h2" }: ProductDetailsProps) => 
         </span>
       </p>
 
-      {product.description && (
+      {/*
+        A piece with no description used to render nothing here — a gap exactly
+        where the reason to buy belongs. Nineteen of twenty pieces on the live
+        site are in that state, so this is the common case, not the edge one.
+        Writing the descriptions is the real fix and it is the shop's to do;
+        until then this turns dead space into the question they can answer, and
+        into the conversation that is how this shop sells anyway.
+      */}
+      {product.description ? (
         <p className="text-base whitespace-pre-line text-foreground-muted">
           {product.description}
+        </p>
+      ) : (
+        <p className="text-base text-foreground-muted">
+          Quer saber do tecido, do caimento ou se essa peça serve em você? Chama
+          a gente no WhatsApp que contamos tudo — e mandamos mais fotos se
+          quiser.
         </p>
       )}
 
