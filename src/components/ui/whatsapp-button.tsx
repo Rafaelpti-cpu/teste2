@@ -32,6 +32,16 @@ export interface WhatsAppButtonProps {
  * A client leaf only because of the click measurement — the tracker uses
  * `sendBeacon`, so the event survives the browser handing over to WhatsApp
  * mid-navigation. Nothing here waits on it.
+ *
+ * On its size: `py-3` puts this at 50 px tall (25 px of line box, 12.5 px of
+ * padding a side, at the project's 16.67 px root). It came down from 54 and
+ * that is as far as it goes — 44 px is the floor for something a thumb has to
+ * hit, and this is the one control the whole dialog exists to offer.
+ *
+ * `text-base` and the full width in the dialog footer are deliberate and not
+ * knobs to turn next: shrinking the words on the buy action, or letting it
+ * stop spanning the footer, saves a few pixels of a screen that is not short
+ * of them and costs the one tap that earns the shop money.
  */
 export const WhatsAppButton = ({
   href,
@@ -46,7 +56,7 @@ export const WhatsAppButton = ({
     onClick={() =>
       track("whatsapp", productSlug ? `/produto/${productSlug}` : "/", productSlug)
     }
-    className={`inline-flex items-center justify-center gap-2.5 rounded-pill bg-action-whatsapp px-6 py-3.5 text-base font-medium text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-action-whatsapp-hover ${className}`}
+    className={`inline-flex items-center justify-center gap-2.5 rounded-pill bg-action-whatsapp px-5 py-3 text-base font-medium text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-action-whatsapp-hover ${className}`}
   >
     <WhatsAppGlyph className="size-5 shrink-0" />
     {children}
