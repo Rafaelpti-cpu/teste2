@@ -31,7 +31,28 @@ export const ProductGallery = ({
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      <div className="relative aspect-[3/4] max-h-[46lvh] w-full overflow-hidden rounded-card bg-surface-muted md:max-h-none">
+      {/*
+        Aspect ratio only — no height cap.
+
+        There used to be a `max-h-[46lvh]` here, meant to keep the price near
+        the photo on a phone. It could not: with `w-full` the width does not
+        follow, so the frame stopped being 3/4 and `object-cover` ate the
+        difference. Measured on a 375×812 phone: the frame came out 294×373
+        (0.787) against a 900×1200 photo (0.75), cutting 4.7% of the height —
+        top and bottom, which is the head and the hem of the piece. On a
+        stubbier phone (360×640) the same rule cut about a quarter of it.
+
+        The card in the grid is a plain `aspect-[3/4]`, so the photo the
+        customer taps is whole and the one that opens was not — the shop
+        reported exactly that. This frame is now the same shape as that card,
+        which is the same shape as the photo, so nothing is cropped anywhere.
+
+        The cap was not buying what it was for, either: with it in place the
+        name sat at y=636 in a box ending at y=650 and the price below that —
+        already past the fold. Removing it costs ~19 px more scrolling. The
+        WhatsApp button is pinned in the dialog's footer and never moved.
+      */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card bg-surface-muted">
         {current && (
           <Image
             key={current}
