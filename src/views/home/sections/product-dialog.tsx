@@ -105,7 +105,29 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-              <ProductGallery images={product.images} name={product.name} />
+              {/*
+                88% of the width, on a phone only.
+
+                The thumbnail strip is how a customer learns the piece has more
+                photos, and it was landing within 49 px of the scroll edge on a
+                375x812 test — which is no margin at all once Safari's address
+                bar takes its share, so on a real phone the strip sits at or
+                past the fold and nobody scrolls to find it.
+
+                Trimming the width, not the height, is the whole point: the
+                frame keeps its 3/4 and shrinks whole, so nothing is cropped.
+                Capping the height instead is what used to crop the photo.
+
+                A percentage rather than a `vh` cap because it behaves the same
+                on every phone — a viewport-height cap bites hard on a wide
+                screen and not at all on a narrow one. This buys ~50 px
+                everywhere, which is the margin that was missing.
+              */}
+              <ProductGallery
+                images={product.images}
+                name={product.name}
+                className="mx-auto w-full max-w-[88%] md:max-w-none"
+              />
               <ProductDetails product={product} />
             </div>
           </div>
