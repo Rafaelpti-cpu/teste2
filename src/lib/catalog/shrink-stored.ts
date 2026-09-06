@@ -180,10 +180,24 @@ export const shrinkStoredPhotos = async (): Promise<ShrinkResult> => {
           MAX_EDGE it is never re-compressed again, only rewritten if its cache
           header still needs fixing.
         */
-        const { width = 0, height = 0 } = await sharp(original).metadata();
+        const { width = 0, height = 0, format } = await sharp(original).metadata();
         const tooBig = width > MAX_WIDTH || height > MAX_HEIGHT;
 
-        if (tooBig) {
+        /*
+          PNG is a rescue case, not a size case.
+
+          A phone whose canvas cannot encode WebP hands back PNG instead, and
+          the uploader used to label that `image/webp` and ship it — 3 341 KB
+          for one correctly-sized photo, measured on the live bucket. The
+          uploader no longer does that, but the ones already stored are only
+          reachable from here, and on pixels alone they look finished.
+
+          Converting once is safe to repeat: the result is WebP, so the second
+          run does not match this and nothing is re-compressed twice.
+        */
+        const wastefulFormat = format === "png";
+
+        if (tooBig || wastefulFormat) {
           const shrunk = await sharp(original)
             // Honours EXIF rotation, exactly as the browser resizer does.
             .rotate()

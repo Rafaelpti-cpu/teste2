@@ -122,15 +122,42 @@ export const shrinkForUpload = async (file: File): Promise<File> => {
     context.drawImage(bitmap, 0, 0, width, height);
     bitmap.close();
 
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/webp", QUALITY),
-    );
-    // Some browsers answer `null` for WebP; others hand back something larger
-    // than the original, which happens with photos that are already compressed.
-    if (!blob || blob.size >= file.size) return file;
+    /*
+      Ask for WebP, then check what actually came back.
 
-    const name = file.name.replace(/\.[^.]+$/, "") + ".webp";
-    return new File([blob], name, { type: "image/webp", lastModified: Date.now() });
+      `toBlob` does not fail when it cannot encode the type you asked for — the
+      spec tells it to quietly produce **PNG** instead. PNG is lossless, so for
+      a photograph that is megabytes. This code then named the file `.webp` and
+      labelled it `image/webp`, and nothing downstream looked inside.
+
+      It is not hypothetical. Measured on the live bucket: the newest upload was
+      1100x1956, correctly sized, stored as `…-044f4724.webp`, served as
+      `image/webp` — and the bytes are PNG, 3 341 KB. A customer opening that
+      piece downloads three and a half megabytes.
+
+      So the encoder's answer decides the name and the type, never the request.
+      JPEG is the fallback because every browser can encode it; if even that
+      comes back as something else, the original file goes up untouched and the
+      maintenance job deals with it server-side, where sharp always works.
+    */
+    const encode = (type: string) =>
+      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, QUALITY));
+
+    let blob = await encode("image/webp");
+    if (!blob || blob.type !== "image/webp") {
+      const jpeg = await encode("image/jpeg");
+      if (jpeg?.type === "image/jpeg") blob = jpeg;
+    }
+
+    const extension =
+      blob?.type === "image/webp" ? "webp" : blob?.type === "image/jpeg" ? "jpg" : null;
+
+    // No usable encoder, or a re-encode that gained weight — which happens with
+    // photos that are already well compressed.
+    if (!blob || !extension || blob.size >= file.size) return file;
+
+    const name = file.name.replace(/\.[^.]+$/, "") + `.${extension}`;
+    return new File([blob], name, { type: blob.type, lastModified: Date.now() });
   } catch {
     return file;
   }
