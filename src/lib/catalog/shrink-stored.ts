@@ -27,19 +27,25 @@ import { invalidateStorageUsage, listStorageFiles } from "@/lib/catalog/storage"
 
 /**
  * Same geometry as the browser-side resizer, so both produce one look.
- * See `resize-image.ts` for why 1100 and not a rounder number.
+ * See `resize-image.ts` for why the cap is on width and why 1100.
  */
-const MAX_EDGE = 1100;
+const MAX_WIDTH = 1100;
+const MAX_HEIGHT = 2400;
 const QUALITY = 82;
 
 /**
- * Below this a photo is left at its current size.
+ * Below this a photo is not considered for a rewrite on size.
  *
- * 150 KB, down from 400. At 1100 px a garment photo lands around 90–140 KB, so
- * the old threshold would have declared every already-shrunk photo finished and
- * skipped the re-pass that this size change needs.
+ * 400 KB. It was 150, chosen when a processed photo landed at 90–140 KB — with
+ * the cap moved to width, the same photo keeps its full width and lands at
+ * 150–280 KB instead, so 150 would mark every correctly-sized photo as work
+ * forever and the button would never finish.
+ *
+ * Nothing is lost by the higher number: this is only a cheap prefilter on the
+ * listing, and the decision that matters is the pixel check below. A photo big
+ * enough to need shrinking is measured in megabytes.
  */
-export const SHRINK_THRESHOLD_BYTES = 150 * 1024;
+export const SHRINK_THRESHOLD_BYTES = 400 * 1024;
 
 /** A year. Names are unique per upload, so the content never changes under one. */
 export const CACHE_CONTROL = "max-age=31536000";
@@ -175,15 +181,15 @@ export const shrinkStoredPhotos = async (): Promise<ShrinkResult> => {
           header still needs fixing.
         */
         const { width = 0, height = 0 } = await sharp(original).metadata();
-        const tooBig = Math.max(width, height) > MAX_EDGE;
+        const tooBig = width > MAX_WIDTH || height > MAX_HEIGHT;
 
         if (tooBig) {
           const shrunk = await sharp(original)
             // Honours EXIF rotation, exactly as the browser resizer does.
             .rotate()
             .resize({
-              width: MAX_EDGE,
-              height: MAX_EDGE,
+              width: MAX_WIDTH,
+              height: MAX_HEIGHT,
               fit: "inside",
               withoutEnlargement: true,
             })
