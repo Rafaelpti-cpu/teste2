@@ -31,38 +31,73 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
   const stopScroll = useScroll((state) => state.stop);
   const startScroll = useScroll((state) => state.start);
 
+  /*
+    The dialog's open state, and the page's scroll lock, both follow `product`.
+
+    The lock used to be released by the `close` event, and that froze the site.
+    Two ways it never arrives:
+
+    1. Leaving the page with a piece open. Tapping "Abrir página da peça"
+       navigates, this component unmounts, and removing a `<dialog>` fires
+       nothing — so the lock stayed on and the shop could not scroll the
+       product page, or the home page after going back. Spec-correct, every
+       browser, and exactly the report.
+    2. Some engines do not fire it at all. Measured in this project's preview
+       browser: `close()` ran with `open === true`, the attribute came off, and
+       no `close` event followed — on a bare `<dialog>` built from scratch, so
+       it is the engine and not this component.
+
+    Either way `html { overflow: hidden }` was left behind and the page could
+    not move in any direction until a reload.
+
+    So the lock is tied to this effect's lifetime instead. The cleanup runs
+    when the piece closes AND when this component goes away, which is the case
+    an event listener structurally cannot cover. `startScroll` is called from
+    here and nowhere else — one owner, no way for the two to disagree.
+  */
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
 
-    if (product && !dialog.open) {
+    if (!product) {
+      if (dialog.open) dialog.close();
+      return;
+    }
+
+    if (!dialog.open) {
       dialog.showModal();
       // Most customers browse the grid and never load `/produto/<slug>`, so
       // without this the dialog — the main way a piece is actually looked at —
       // would be invisible in the metrics.
       track("view", `/produto/${product.slug}`, product.slug);
-      // Lock the page behind it through Lenis, not `body { overflow }` —
-      // the smooth-scroll layer owns scrolling here.
-      stopScroll();
     }
-    if (!product && dialog.open) {
-      dialog.close();
-      startScroll();
-    }
+
+    stopScroll();
+    return () => startScroll();
   }, [product, stopScroll, startScroll]);
 
-  // Escape and the backdrop close it natively; keep React's state in step.
+  /*
+    Escape is the one close this component cannot initiate, so it still needs
+    the browser to tell us — but `cancel` is what Escape fires, and it fires
+    before `close` and in engines where `close` does not. Both are handled;
+    `onClose` twice is the same `setState(null)` twice, which costs nothing.
+
+    The × and the backdrop no longer come through here. They set React state
+    directly and let the effect above close the dialog, so the one path that
+    every customer uses does not depend on an event arriving at all.
+  */
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
 
-    const handleClose = () => {
-      startScroll();
-      onClose();
-    };
+    const handleClose = () => onClose();
     dialog.addEventListener("close", handleClose);
-    return () => dialog.removeEventListener("close", handleClose);
-  }, [onClose, startScroll]);
+    dialog.addEventListener("cancel", handleClose);
+    return () => {
+      dialog.removeEventListener("close", handleClose);
+      dialog.removeEventListener("cancel", handleClose);
+    };
+  }, [onClose]);
 
   return (
     <dialog
@@ -70,8 +105,10 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
       aria-label={product ? product.name : "Detalhes do produto"}
       onClick={(event) => {
         // A click on the dialog itself is a click on the backdrop; the panel
-        // inside stops propagation.
-        if (event.target === ref.current) ref.current?.close();
+        // inside stops propagation. Clearing the piece is what closes it — the
+        // effect above does the `close()`, and the same cleanup releases the
+        // scroll lock whether the browser sends us a `close` event or not.
+        if (event.target === ref.current) onClose();
       }}
       className="m-auto w-[min(56rem,92vw)] rounded-panel bg-background p-0 text-foreground backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
@@ -96,7 +133,7 @@ export const ProductDialog = ({ product, onClose }: ProductDialogProps) => {
               </Link>
               <button
                 type="button"
-                onClick={() => ref.current?.close()}
+                onClick={onClose}
                 aria-label="Fechar"
                 className="-m-2 flex size-10 items-center justify-center rounded-pill text-xl leading-none text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
               >
